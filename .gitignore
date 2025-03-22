@@ -1,0 +1,10 @@
+extern/
+tools/
+data/
+.vs/
+build/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+GenerateProjectFiles.bat
