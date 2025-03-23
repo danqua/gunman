@@ -46,7 +46,7 @@ struct InputState
 // Initialize input system
 void InputInit();
 
-// Update input system
+// Update input state for the current frame
 void InputUpdate(InputState* state);
 
 // ----------------------------------------------------------------
