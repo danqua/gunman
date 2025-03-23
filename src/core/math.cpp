@@ -64,3 +64,70 @@ Vec2 Vec2Normalize(Vec2 a)
     Vec2 result = length > 1e-4f ? Vec2Divide(a, length) : Vec2Zero();
     return result;
 }
+
+f32 DegToRad(f32 degrees)
+{
+    f32 result = degrees * PI / 180.0f;
+    return result;
+}
+
+f32 RadToDeg(f32 radians)
+{
+    f32 result = radians * 180.0f / PI;
+    return result;
+}
+
+f32 Sin(f32 a)
+{
+    f32 result = sinf(a);
+    return result;
+}
+
+f32 Cos(f32 a)
+{
+    f32 result = cosf(a);
+    return result;
+}
+
+f32 Tan(f32 a)
+{
+    f32 result = tanf(a);
+    return result;
+}
+
+f32 Atan2(f32 y, f32 x)
+{
+    f32 result = atan2f(y, x);
+    return result;
+}
+
+f32 Abs(f32 a)
+{
+    f32 result = fabsf(a);
+    return result;
+}
+
+f32 Min(f32 a, f32 b)
+{
+    f32 result = a < b ? a : b;
+    return result;
+}
+
+f32 Max(f32 a, f32 b)
+{
+    f32 result = a > b ? a : b;
+    return result;
+}
+
+f32 Clamp(f32 a, f32 min, f32 max)
+{
+    f32 result = Min(Max(a, min), max);
+    return result;
+
+}
+
+f32 Lerp(f32 a, f32 b, f32 t)
+{
+    f32 result = a + (b - a) * t;
+    return result;
+}
