@@ -3,6 +3,7 @@ tools/
 data/
 .vs/
 build/
+backup/
 *.sln
 *.vcxproj
 *.vcxproj.filters
