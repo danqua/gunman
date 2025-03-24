@@ -327,6 +327,25 @@ Mat4 Mat4Identity()
     return result;
 }
 
+Mat4 Mat4Multiply(Mat4 a, Mat4 b)
+{
+    Mat4 result = {};
+
+    for (s32 row = 0; row < 4; ++row)
+    {
+        for (int col = 0; col < 4; ++col)
+        {
+            result.m[row][col] = 0.0f;
+            for (s32 k = 0; k < 4; ++k)
+            {
+                result.m[row][col] += a.m[row][k] * b.m[k][col];
+            }
+        }
+    }
+
+    return result;
+}
+
 Mat4 Mat4Translate(Mat4 mat, Vec3 position)
 {
     Mat4 result = mat;
@@ -350,48 +369,53 @@ Mat4 Mat4Rotate(Mat4 mat, f32 angle, Vec3 axis)
     f32 rad = DegToRad(angle);
     f32 c = Cos(rad);
     f32 s = Sin(rad);
-    f32 oneMinusC = 1.0f - c;
+    f32 one_minus_c = 1.0f - c;
 
     // Normalize the axis
-    Vec3 normalizedAxis = Vec3Normalize(axis);
+    Vec3 normalized_axis = Vec3Normalize(axis);
 
-    f32 x = normalizedAxis.x;
-    f32 y = normalizedAxis.y;
-    f32 z = normalizedAxis.z;
+    f32 x = normalized_axis.x;
+    f32 y = normalized_axis.y;
+    f32 z = normalized_axis.z;
 
-    Mat4 rotationMatrix = Mat4Identity();
-    rotationMatrix.m[0][0] = c + x * x * oneMinusC;
-    rotationMatrix.m[0][1] = x * y * oneMinusC - z * s;
-    rotationMatrix.m[0][2] = x * z * oneMinusC + y * s;
+    Mat4 rotation_matrix = Mat4Identity();
+    rotation_matrix.m[0][0] = c + x * x * one_minus_c;
+    rotation_matrix.m[0][1] = x * y * one_minus_c - z * s;
+    rotation_matrix.m[0][2] = x * z * one_minus_c + y * s;
 
-    rotationMatrix.m[1][0] = y * x * oneMinusC + z * s;
-    rotationMatrix.m[1][1] = c + y * y * oneMinusC;
-    rotationMatrix.m[1][2] = y * z * oneMinusC - x * s;
+    rotation_matrix.m[1][0] = y * x * one_minus_c + z * s;
+    rotation_matrix.m[1][1] = c + y * y * one_minus_c;
+    rotation_matrix.m[1][2] = y * z * one_minus_c - x * s;
 
-    rotationMatrix.m[2][0] = z * x * oneMinusC - y * s;
-    rotationMatrix.m[2][1] = z * y * oneMinusC + x * s;
-    rotationMatrix.m[2][2] = c + z * z * oneMinusC;
+    rotation_matrix.m[2][0] = z * x * one_minus_c - y * s;
+    rotation_matrix.m[2][1] = z * y * one_minus_c + x * s;
+    rotation_matrix.m[2][2] = c + z * z * one_minus_c;
 
     // Multiply the current matrix by the rotation matrix
-    return Mat4Multiply(mat, rotationMatrix);
+    return Mat4Multiply(mat, rotation_matrix);
 }
 
-Mat4 Mat4Multiply(Mat4 a, Mat4 b)
+Mat4 Mat4LookAt(Vec3 eye, Vec3 target, Vec3 up)
 {
-    Mat4 result = {};
+    Vec3 zaxis = Vec3Normalize(Vec3Subtract(eye, target)); // Forward
+    Vec3 xaxis = Vec3Normalize(Vec3Cross(up, zaxis));      // Right
+    Vec3 yaxis = Vec3Cross(zaxis, xaxis);                  // Up
 
-    for (s32 row = 0; row < 4; ++row)
-    {
-        for (int col = 0; col < 4; ++col)
-        {
-            result.m[row][col] = 0.0f;
-            for (s32 k = 0; k < 4; ++k)
-            {
-                result.m[row][col] += a.m[row][k] * b.m[k][col];
-            }
-        }
-    }
+    Mat4 result = Mat4Identity();
+    result.m[0][0] = xaxis.x;
+    result.m[1][0] = xaxis.y;
+    result.m[2][0] = xaxis.z;
+    result.m[0][1] = yaxis.x;
+    result.m[1][1] = yaxis.y;
+    result.m[2][1] = yaxis.z;
+    result.m[0][2] = zaxis.x;
+    result.m[1][2] = zaxis.y;
+    result.m[2][2] = zaxis.z;
 
+    result.m[3][0] = -Vec3Dot(xaxis, eye);
+    result.m[3][1] = -Vec3Dot(yaxis, eye);
+    result.m[3][2] = -Vec3Dot(zaxis, eye);
+    
     return result;
 }
 
@@ -399,10 +423,10 @@ Mat4 Mat4Perspective(f32 fov, f32 aspect, f32 near, f32 far)
 {
     Mat4 result = {};
 
-    f32 tanHalfFov = Tan(fov * 0.5f); // fov is in radians
+    f32 tan_half_fov = Tan(fov * 0.5f); // fov is in radians
 
-    result.m[0][0] = 1.0f / (aspect * tanHalfFov);
-    result.m[1][1] = 1.0f / tanHalfFov;
+    result.m[0][0] = 1.0f / (aspect * tan_half_fov);
+    result.m[1][1] = 1.0f / tan_half_fov;
     result.m[2][2] = -(far + near) / (far - near);
     result.m[2][3] = -1.0f;
     result.m[3][2] = -(2.0f * far * near) / (far - near);

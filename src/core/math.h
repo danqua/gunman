@@ -143,6 +143,9 @@ struct Mat4
 // Returns an identity matrix
 Mat4 Mat4Identity();
 
+// Multiplies two matrices
+Mat4 Mat4Multiply(Mat4 a, Mat4 b);
+
 // Returns a translation matrix
 Mat4 Mat4Translate(Mat4 mat, Vec3 position);
 
@@ -152,8 +155,8 @@ Mat4 Mat4Scale(Mat4 mat, Vec3 scale);
 // Returns a rotation matrix
 Mat4 Mat4Rotate(Mat4 mat, f32 angle, Vec3 axis);
 
-// Multiplies two matrices
-Mat4 Mat4Multiply(Mat4 a, Mat4 b);
+// Look at matrix
+Mat4 Mat4LookAt(Vec3 eye, Vec3 target, Vec3 up);
 
 // Perspective projection matrix
 Mat4 Mat4Perspective(f32 fov, f32 aspect, f32 near, f32 far);
