@@ -1,5 +1,9 @@
 #include "math.h"
 
+// ----------------------------------------------------------------
+// Vec2
+// ----------------------------------------------------------------
+
 Vec2 Vec2Zero()
 {
     Vec2 result;
@@ -48,7 +52,7 @@ f32 Vec2Dot(Vec2 a, Vec2 b)
 
 f32 Vec2Length(Vec2 a)
 {
-    f32 result = sqrtf(a.x * a.x + a.y * a.y);
+    f32 result = SquareRoot(a.x * a.x + a.y * a.y);
     return result;
 }
 
@@ -64,6 +68,367 @@ Vec2 Vec2Normalize(Vec2 a)
     Vec2 result = length > 1e-4f ? Vec2Divide(a, length) : Vec2Zero();
     return result;
 }
+
+Vec2 Vec2Min(Vec2 a, Vec2 b)
+{
+    Vec2 result;
+    result.x = Min(a.x, b.x);
+    result.y = Min(a.y, b.y);
+    return result;
+}
+
+Vec2 Vec2Max(Vec2 a, Vec2 b)
+{
+    Vec2 result;
+    result.x = Max(a.x, b.x);
+    result.y = Max(a.y, b.y);
+    return result;
+}
+
+Vec2 Vec2Clamp(Vec2 a, Vec2 min, Vec2 max)
+{
+    Vec2 result;
+    result.x = Clamp(a.x, min.x, max.x);
+    result.y = Clamp(a.y, min.y, max.y);
+    return result;
+}
+
+// ----------------------------------------------------------------
+// Vec3
+// ----------------------------------------------------------------
+
+Vec3 Vec3Zero()
+{
+    Vec3 result;
+    result.x = 0.0f;
+    result.y = 0.0f;
+    result.z = 0.0f;
+    return result;
+}
+
+Vec3 Vec3Add(Vec3 a, Vec3 b)
+{
+    Vec3 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    return result;
+}
+
+Vec3 Vec3Subtract(Vec3 a, Vec3 b)
+{
+    Vec3 result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    return result;
+}
+
+Vec3 Vec3Multiply(Vec3 a, f32 b)
+{
+    Vec3 result;
+    result.x = a.x * b;
+    result.y = a.y * b;
+    result.z = a.z * b;
+    return result;
+}
+
+Vec3 Vec3Divide(Vec3 a, f32 b)
+{
+    Vec3 result;
+    result.x = a.x / b;
+    result.y = a.y / b;
+    result.z = a.z / b;
+    return result;
+}
+
+f32 Vec3Dot(Vec3 a, Vec3 b)
+{
+    f32 result = a.x * b.x + a.y * b.y + a.z * b.z;
+    return result;
+}
+
+Vec3 Vec3Cross(Vec3 a, Vec3 b)
+{
+    Vec3 result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+    return result;
+}
+
+f32 Vec3Length(Vec3 a)
+{
+    f32 result = SquareRoot(a.x * a.x + a.y * a.y + a.z * a.z);
+    return result;
+}
+
+f32 Vec3LengthSquared(Vec3 a)
+{
+    f32 result = a.x * a.x + a.y * a.y + a.z * a.z;
+    return result;
+}
+
+Vec3 Vec3Normalize(Vec3 a)
+{
+    f32 length = Vec3Length(a);
+    Vec3 result = length > 1e-4f ? Vec3Divide(a, length) : Vec3Zero();
+    return result;
+}
+
+Vec3 Vec3Min(Vec3 a, Vec3 b)
+{
+    Vec3 result;
+    result.x = Min(a.x, b.x);
+    result.y = Min(a.y, b.y);
+    result.z = Min(a.z, b.z);
+    return result;
+}
+
+Vec3 Vec3Max(Vec3 a, Vec3 b)
+{
+    Vec3 result;
+    result.x = Max(a.x, b.x);
+    result.y = Max(a.y, b.y);
+    result.z = Max(a.z, b.z);
+    return result;
+}
+
+Vec3 Vec3Clamp(Vec3 a, Vec3 min, Vec3 max)
+{
+    Vec3 result;
+    result.x = Clamp(a.x, min.x, max.x);
+    result.y = Clamp(a.y, min.y, max.y);
+    result.z = Clamp(a.z, min.z, min.z);
+    return result;
+}
+
+// ----------------------------------------------------------------
+// Vec4
+// ----------------------------------------------------------------
+
+Vec4 Vec4Zero()
+{
+    Vec4 result;
+    result.x = 0.0f;
+    result.y = 0.0f;
+    result.z = 0.0f;
+    result.w = 0.0f;
+    return result;
+}
+
+Vec4 Vec4Add(Vec4 a, Vec4 b)
+{
+    Vec4 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.w = a.w + b.w;
+    return result;
+}
+
+Vec4 Vec4Subtract(Vec4 a, Vec4 b)
+{
+    Vec4 result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    result.w = a.w - b.w;
+    return result;
+}
+
+Vec4 Vec4Multiply(Vec4 a, f32 b)
+{
+    Vec4 result;
+    result.x = a.x * b;
+    result.y = a.y * b;
+    result.z = a.z * b;
+    result.w = a.w * b;
+    return result;
+}
+
+Vec4 Vec4Divide(Vec4 a, f32 b)
+{
+    Vec4 result;
+    result.x = a.x / b;
+    result.y = a.y / b;
+    result.z = a.z / b;
+    result.w = a.w / b;
+    return result;
+}
+
+f32 Vec4Dot(Vec4 a, Vec4 b)
+{
+    f32 result = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    return result;
+}
+
+f32 Vec4Length(Vec4 a)
+{
+    f32 result = SquareRoot(a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w);
+    return result;
+}
+
+f32 Vec4LengthSquared(Vec4 a)
+{
+    f32 result = a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w;
+    return result;
+}
+
+Vec4 Vec4Normalize(Vec4 a)
+{
+    Vec4 result;
+    f32 length = Vec4Length(a);
+    result = length > 1e-4f ? Vec4Divide(a, length) : Vec4Zero();
+    return result;
+}
+
+Vec4 Vec4Min(Vec4 a, Vec4 b)
+{
+    Vec4 result;
+    result.x = Min(a.x, b.x);
+    result.y = Min(a.y, b.y);
+    result.z = Min(a.z, b.z);
+    result.w = Min(a.w, b.w);
+    return result;
+}
+
+Vec4 Vec4Max(Vec4 a, Vec4 b)
+{
+    Vec4 result;
+    result.x = Max(a.x, b.x);
+    result.y = Max(a.y, b.y);
+    result.z = Max(a.z, b.z);
+    result.w = Max(a.w, b.w);
+    return result;
+}
+
+Vec4 Vec4Clamp(Vec4 a, Vec4 min, Vec4 max)
+{
+    Vec4 result;
+    result.x = Clamp(a.x, min.x, max.x);
+    result.y = Clamp(a.y, min.y, max.y);
+    result.z = Clamp(a.z, min.z, max.z);
+    result.w = Clamp(a.w, min.w, max.w);
+    return result;
+}
+
+// ----------------------------------------------------------------
+// Mat4
+// ----------------------------------------------------------------
+
+Mat4 Mat4Identity()
+{
+    Mat4 result = {};
+    result.m[0][0] = 1.0f;
+    result.m[1][1] = 1.0f;
+    result.m[2][2] = 1.0f;
+    result.m[3][3] = 1.0f;
+    return result;
+}
+
+Mat4 Mat4Translate(Mat4 mat, Vec3 position)
+{
+    Mat4 result = mat;
+    result.m[3][0] += position.x;
+    result.m[3][1] += position.y;
+    result.m[3][2] += position.z;
+    return result;
+}
+
+Mat4 Mat4Scale(Mat4 mat, Vec3 scale)
+{
+    Mat4 result = mat;
+    result.m[0][0] *= scale.x;
+    result.m[1][1] *= scale.y;
+    result.m[2][2] *= scale.z;
+    return result;
+}
+
+Mat4 Mat4Rotate(Mat4 mat, f32 angle, Vec3 axis)
+{
+    f32 rad = DegToRad(angle);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
+    f32 oneMinusC = 1.0f - c;
+
+    // Normalize the axis
+    Vec3 normalizedAxis = Vec3Normalize(axis);
+
+    f32 x = normalizedAxis.x;
+    f32 y = normalizedAxis.y;
+    f32 z = normalizedAxis.z;
+
+    Mat4 rotationMatrix = Mat4Identity();
+    rotationMatrix.m[0][0] = c + x * x * oneMinusC;
+    rotationMatrix.m[0][1] = x * y * oneMinusC - z * s;
+    rotationMatrix.m[0][2] = x * z * oneMinusC + y * s;
+
+    rotationMatrix.m[1][0] = y * x * oneMinusC + z * s;
+    rotationMatrix.m[1][1] = c + y * y * oneMinusC;
+    rotationMatrix.m[1][2] = y * z * oneMinusC - x * s;
+
+    rotationMatrix.m[2][0] = z * x * oneMinusC - y * s;
+    rotationMatrix.m[2][1] = z * y * oneMinusC + x * s;
+    rotationMatrix.m[2][2] = c + z * z * oneMinusC;
+
+    // Multiply the current matrix by the rotation matrix
+    return Mat4Multiply(mat, rotationMatrix);
+}
+
+Mat4 Mat4Multiply(Mat4 a, Mat4 b)
+{
+    Mat4 result = {};
+
+    for (s32 row = 0; row < 4; ++row)
+    {
+        for (int col = 0; col < 4; ++col)
+        {
+            result.m[row][col] = 0.0f;
+            for (s32 k = 0; k < 4; ++k)
+            {
+                result.m[row][col] += a.m[row][k] * b.m[k][col];
+            }
+        }
+    }
+
+    return result;
+}
+
+Mat4 Mat4Perspective(f32 fov, f32 aspect, f32 near, f32 far)
+{
+    Mat4 result = {};
+
+    f32 tanHalfFov = Tan(fov * 0.5f); // fov is in radians
+
+    result.m[0][0] = 1.0f / (aspect * tanHalfFov);
+    result.m[1][1] = 1.0f / tanHalfFov;
+    result.m[2][2] = -(far + near) / (far - near);
+    result.m[2][3] = -1.0f;
+    result.m[3][2] = -(2.0f * far * near) / (far - near);
+
+    return result;
+}
+
+Mat4 Mat4Orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
+{
+    Mat4 result = {};
+
+    result.m[0][0] = 2.0f / (right - left);
+    result.m[1][1] = 2.0f / (top - bottom);
+    result.m[2][2] = -2.0f / (far - near);
+    result.m[3][0] = -(right + left) / (right - left);
+    result.m[3][1] = -(top + bottom) / (top - bottom);
+    result.m[3][2] = -(far + near) / (far - near);
+    result.m[3][3] = 1.0f;
+
+    return result;
+}
+
+
+// ----------------------------------------------------------------
+// Utility functions
+// ----------------------------------------------------------------
 
 f32 DegToRad(f32 degrees)
 {
@@ -129,5 +494,11 @@ f32 Clamp(f32 a, f32 min, f32 max)
 f32 Lerp(f32 a, f32 b, f32 t)
 {
     f32 result = a + (b - a) * t;
+    return result;
+}
+
+f32 SquareRoot(f32 a)
+{
+    f32 result = sqrtf(a);
     return result;
 }
