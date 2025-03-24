@@ -27,6 +27,10 @@ void TimeUpdate(Time* time, f32 now)
     time->accumulator += time->scaled_dt;
     time->steps = 0;
 
+    time->frame_count++;
+    time->fps = 1.0f / time->delta_time;
+    time->fps_avg = (f32)time->frame_count / time->real_time;
+
     last_time = now;
 }
 

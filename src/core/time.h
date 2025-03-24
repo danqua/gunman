@@ -13,6 +13,10 @@ struct Time
     f32 fixed_dt;       // Fixed time step.
     f32 accumulator;    // Accumulator for fixed time step.
     s32 steps;          // Number of fixed steps this frame.
+
+    s32 frame_count;    // Number of frames since game starts.
+    f32 fps;            // Frames per second.
+    f32 fps_avg;        // Average frames per second.
 };
 
 // Initializes the time system.
