@@ -36,9 +36,8 @@ f32 Vec2LengthSquared(Vec2 a);
 // Returns a normalized Vec2
 Vec2 Vec2Normalize(Vec2 a);
 
-
 // ----------------------------------------------------------------
-// Math functions
+// Math utility functions
 // ----------------------------------------------------------------
 
 // Pi constant
