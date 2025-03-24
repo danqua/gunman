@@ -50,7 +50,7 @@ void InputInit();
 void InputUpdate(InputState* state);
 
 // ----------------------------------------------------------------
-// Platform specific functions that the platform layer must call
+// Platform specific functions called by the platform layer
 // ----------------------------------------------------------------
 
 // Process key event

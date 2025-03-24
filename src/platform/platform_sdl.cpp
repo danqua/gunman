@@ -1,0 +1,129 @@
+#include "platform.h"
+#include "core/input.h"
+#include <SDL3/SDL.h>
+
+static SDL_Window* window;
+static SDL_GLContext gl_context;
+static bool should_quit = false;
+static f32 timer_frequency;
+
+static Key SDLScancodeToKey(s32 scancode)
+{
+    switch (scancode)
+    {
+    case SDL_SCANCODE_W:      return KEY_W;
+    case SDL_SCANCODE_A:      return KEY_A;
+    case SDL_SCANCODE_S:      return KEY_S;
+    case SDL_SCANCODE_D:      return KEY_D;
+    case SDL_SCANCODE_UP:     return KEY_UP;
+    case SDL_SCANCODE_DOWN:   return KEY_DOWN;
+    case SDL_SCANCODE_LEFT:   return KEY_LEFT;
+    case SDL_SCANCODE_RIGHT:  return KEY_RIGHT;
+    case SDL_SCANCODE_SPACE:  return KEY_SPACE;
+    case SDL_SCANCODE_ESCAPE: return KEY_ESCAPE;
+    default:                  return KEY_UNKNOWN;
+    }
+}
+
+static MouseButton SDLButtonToMouseButton(s32 button)
+{
+    switch (button)
+    {
+    case SDL_BUTTON_LEFT:   return MOUSE_BUTTON_LEFT;
+    case SDL_BUTTON_RIGHT:  return MOUSE_BUTTON_RIGHT;
+    case SDL_BUTTON_MIDDLE: return MOUSE_BUTTON_MIDDLE;
+    default:                return MOUSE_BUTTON_COUNT;
+    }
+}
+
+static void PlatformProcessKeyEvent(s32 scancode, bool is_down)
+{
+    Key key = SDLScancodeToKey(scancode);
+
+    if (key != KEY_UNKNOWN)
+    {
+        InputProcessKeyEvent(key, is_down);
+    }
+}
+
+static void PlatformProcessMouseButtonEvent(s32 button, bool is_down)
+{
+    MouseButton mouse_button = SDLButtonToMouseButton(button);
+
+    if (mouse_button != MOUSE_BUTTON_COUNT)
+    {
+        InputProcessMouseButtonEvent(mouse_button, is_down);
+    }
+}
+
+static void PlatformProcessMouseMoveEvent(f32 x, f32 y)
+{
+    InputProcessMouseMoveEvent(x, y);
+}
+
+void PlatformInit()
+{
+    SDL_Init(SDL_INIT_VIDEO);
+    window = SDL_CreateWindow("Gunman", 800, 600, SDL_WINDOW_OPENGL);
+    gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_SetSwapInterval(1);
+
+    timer_frequency = (f32)SDL_GetPerformanceFrequency();
+}
+
+void PlatformShutdown()
+{
+    SDL_GL_DestroyContext(gl_context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+f32 PlatformGetTime()
+{
+    f32 result = SDL_GetPerformanceCounter() / timer_frequency;
+    return result;
+}
+
+void PlatformSwapBuffers()
+{
+    SDL_GL_SwapWindow(window);
+}
+
+void PlatformPollEvents()
+{
+    SDL_Event ev;
+    while (SDL_PollEvent(&ev))
+    {
+        switch (ev.type)
+        {
+            case SDL_EVENT_QUIT: {
+                should_quit = true;
+            } break;
+
+            case SDL_EVENT_KEY_DOWN: {
+                PlatformProcessKeyEvent(ev.key.scancode, true);
+            } break;
+
+            case SDL_EVENT_KEY_UP: {
+                PlatformProcessKeyEvent(ev.key.scancode, false);
+            } break;
+
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:{
+                PlatformProcessMouseButtonEvent(ev.button.button, true);
+            } break;
+
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                PlatformProcessMouseButtonEvent(ev.button.button, false);
+            } break;
+
+            case SDL_EVENT_MOUSE_MOTION:{
+                PlatformProcessMouseMoveEvent(ev.motion.x, ev.motion.y);
+            } break;
+        }
+    }
+}
+
+bool PlatformShouldQuit()
+{
+    return should_quit;
+}
