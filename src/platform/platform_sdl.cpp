@@ -132,3 +132,8 @@ void* PlatformAllocateMemory(u64 size)
 {
     return malloc(size);
 }
+
+void PlatformFreeMemory(void* memory)
+{
+    free(memory);
+}

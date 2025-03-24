@@ -21,3 +21,6 @@ bool PlatformShouldQuit();
 
 // Allocate memory.
 void* PlatformAllocateMemory(u64 size);
+
+// Free memory.
+void PlatformFreeMemory(void* memory);
