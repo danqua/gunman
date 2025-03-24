@@ -18,3 +18,6 @@ void PlatformPollEvents();
 
 // Whether the platform should quit.
 bool PlatformShouldQuit();
+
+// Allocate memory.
+void* PlatformAllocateMemory(u64 size);

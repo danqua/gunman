@@ -127,3 +127,8 @@ bool PlatformShouldQuit()
 {
     return should_quit;
 }
+
+void* PlatformAllocateMemory(u64 size)
+{
+    return malloc(size);
+}
