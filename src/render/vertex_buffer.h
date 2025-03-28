@@ -10,7 +10,7 @@ struct VertexLayout
 };
 
 // Creates a new vertex buffer.
-VertexBuffer* VertexBufferCreate(const void* data, s32 size, VertexLayout* layout);
+VertexBuffer* VertexBufferCreate(const void* data, s32 size);
 
 // Destroyes the vertex buffer.
 void VertexBufferDestroy(VertexBuffer* buffer);
@@ -23,3 +23,6 @@ void VertexBufferUnbind();
 
 // Update the vertex buffer.
 void VertexBufferUpdate(VertexBuffer* buffer, const void* data, s32 size, s32 offset = 0);
+
+// Set the vertex layout.
+void VertexBufferSetLayout(VertexBuffer* buffer, const VertexLayout* layout);
