@@ -8,7 +8,7 @@ void PlatformInit();
 void PlatformShutdown();
 
 // Get the current time in seconds.
-f32 PlatformGetTime();
+f64 PlatformGetTime();
 
 // Swap the front and back buffers.
 void PlatformSwapBuffers();
@@ -24,3 +24,6 @@ void* PlatformAllocateMemory(u64 size);
 
 // Free memory.
 void PlatformFreeMemory(void* memory);
+
+// Log a message to the console.
+void PlatformLog(const char* message, ...);

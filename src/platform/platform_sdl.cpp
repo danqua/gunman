@@ -1,27 +1,29 @@
 #include "platform.h"
 #include "core/input.h"
+
+#include <stdio.h>
 #include <SDL3/SDL.h>
 
 static SDL_Window* window;
 static SDL_GLContext gl_context;
 static bool should_quit = false;
-static f32 timer_frequency;
+static f64 timer_frequency;
 
 static Key SDLScancodeToKey(s32 scancode)
 {
     switch (scancode)
     {
-    case SDL_SCANCODE_W:      return KEY_W;
-    case SDL_SCANCODE_A:      return KEY_A;
-    case SDL_SCANCODE_S:      return KEY_S;
-    case SDL_SCANCODE_D:      return KEY_D;
-    case SDL_SCANCODE_UP:     return KEY_UP;
-    case SDL_SCANCODE_DOWN:   return KEY_DOWN;
-    case SDL_SCANCODE_LEFT:   return KEY_LEFT;
-    case SDL_SCANCODE_RIGHT:  return KEY_RIGHT;
-    case SDL_SCANCODE_SPACE:  return KEY_SPACE;
-    case SDL_SCANCODE_ESCAPE: return KEY_ESCAPE;
-    default:                  return KEY_UNKNOWN;
+        case SDL_SCANCODE_W:      return KEY_W;
+        case SDL_SCANCODE_A:      return KEY_A;
+        case SDL_SCANCODE_S:      return KEY_S;
+        case SDL_SCANCODE_D:      return KEY_D;
+        case SDL_SCANCODE_UP:     return KEY_UP;
+        case SDL_SCANCODE_DOWN:   return KEY_DOWN;
+        case SDL_SCANCODE_LEFT:   return KEY_LEFT;
+        case SDL_SCANCODE_RIGHT:  return KEY_RIGHT;
+        case SDL_SCANCODE_SPACE:  return KEY_SPACE;
+        case SDL_SCANCODE_ESCAPE: return KEY_ESCAPE;
+        default:                  return KEY_UNKNOWN;
     }
 }
 
@@ -29,10 +31,10 @@ static MouseButton SDLButtonToMouseButton(s32 button)
 {
     switch (button)
     {
-    case SDL_BUTTON_LEFT:   return MOUSE_BUTTON_LEFT;
-    case SDL_BUTTON_RIGHT:  return MOUSE_BUTTON_RIGHT;
-    case SDL_BUTTON_MIDDLE: return MOUSE_BUTTON_MIDDLE;
-    default:                return MOUSE_BUTTON_COUNT;
+        case SDL_BUTTON_LEFT:   return MOUSE_BUTTON_LEFT;
+        case SDL_BUTTON_RIGHT:  return MOUSE_BUTTON_RIGHT;
+        case SDL_BUTTON_MIDDLE: return MOUSE_BUTTON_MIDDLE;
+        default:                return MOUSE_BUTTON_COUNT;
     }
 }
 
@@ -68,7 +70,7 @@ void PlatformInit()
     gl_context = SDL_GL_CreateContext(window);
     SDL_GL_SetSwapInterval(1);
 
-    timer_frequency = (f32)SDL_GetPerformanceFrequency();
+    timer_frequency = (f64)SDL_GetPerformanceFrequency();
 }
 
 void PlatformShutdown()
@@ -78,9 +80,9 @@ void PlatformShutdown()
     SDL_Quit();
 }
 
-f32 PlatformGetTime()
+f64 PlatformGetTime()
 {
-    f32 result = SDL_GetPerformanceCounter() / timer_frequency;
+    f64 result = SDL_GetPerformanceCounter() / timer_frequency;
     return result;
 }
 
@@ -136,4 +138,12 @@ void* PlatformAllocateMemory(u64 size)
 void PlatformFreeMemory(void* memory)
 {
     free(memory);
+}
+
+void PlatformLog(const char* message, ...)
+{
+    va_list args;
+    va_start(args, message);
+    vprintf(message, args);
+    va_end(args);
 }
