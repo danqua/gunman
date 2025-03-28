@@ -23,7 +23,7 @@ struct Time
 void TimeInit(Time* time, f32 fixed_dt = 1.0f / 60.0f);
 
 // Updates the time.
-void TimeUpdate(Time* time, f32 now);
+void TimeUpdate(Time* time, f64 now);
 
 // Call repeatedly in fixed update loop.
 bool TimeShouldStep(Time* time);

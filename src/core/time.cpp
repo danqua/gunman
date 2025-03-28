@@ -14,11 +14,11 @@ void TimeInit(Time* time, f32 fixed_dt)
     time->steps = 0;
 }
 
-void TimeUpdate(Time* time, f32 now)
+void TimeUpdate(Time* time, f64 now)
 {
-    static f32 last_time = now;
+    static f64 last_time = now;
 
-    time->delta_time = now - last_time;
+    time->delta_time = (f32)(now - last_time);
     time->real_time += time->delta_time;
 
     time->scaled_dt = time->delta_time * time->time_scale;
