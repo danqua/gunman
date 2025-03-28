@@ -1,5 +1,6 @@
 #include "memory.h"
 #include <string.h>
+#include <assert.h>
 
 struct PoolNode
 {
@@ -26,6 +27,9 @@ void ArenaReset(Arena* arena)
 
 void* ArenaPushSize(Arena* arena, u64 size, u64 alignment)
 {
+    assert(size > 0 && "Size must be greater than 0.");
+    assert(arena->offset < arena->size && "Arena is full.");
+
     u64 new_offset = AlignForward(arena->offset, alignment) + size;
     if (new_offset > arena->size)
     {
