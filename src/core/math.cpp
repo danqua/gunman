@@ -62,6 +62,12 @@ f32 Vec2LengthSquared(Vec2 a)
     return result;
 }
 
+f32 Vec2Distance(Vec2 a, Vec2 b)
+{
+    f32 result = Vec2Length(Vec2Subtract(a, b));
+    return result;
+}
+
 Vec2 Vec2Normalize(Vec2 a)
 {
     f32 length = Vec2Length(a);
@@ -449,6 +455,23 @@ Mat4 Mat4Orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 fa
     return result;
 }
 
+// ----------------------------------------------------------------
+// Box2
+// ----------------------------------------------------------------
+
+b32 Box2ContainsPoint(Box2 box, Vec2 point)
+{
+    b32 result = point.x >= box.min.x && point.x <= box.max.x &&
+                 point.y >= box.min.y && point.y <= box.max.y;
+    return result;
+}
+
+b32 Box2Overlap(Box2 a, Box2 b)
+{
+    b32 result = a.min.x <= b.max.x && a.max.x >= b.min.x &&
+                 a.min.y <= b.max.y && a.max.y >= b.min.y;
+    return result;
+}
 
 // ----------------------------------------------------------------
 // Utility functions
@@ -464,6 +487,16 @@ f32 RadToDeg(f32 radians)
 {
     f32 result = radians * 180.0f / PI;
     return result;
+}
+
+f32 Floor(f32 a)
+{
+    return floorf(a);
+}
+
+f32 Ceil(f32 a)
+{
+    return ceilf(a);
 }
 
 f32 Sin(f32 a)

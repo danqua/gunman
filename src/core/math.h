@@ -3,6 +3,9 @@
 
 #include "core/types.h"
 
+// ----------------------------------------------------------------
+// Vec2
+// ----------------------------------------------------------------
 struct Vec2
 {
     f32 x;
@@ -33,6 +36,9 @@ f32 Vec2Length(Vec2 a);
 // Returns the squared length of a Vec2
 f32 Vec2LengthSquared(Vec2 a);
 
+// Returns the distance between two Vec2s
+f32 Vec2Distance(Vec2 a, Vec2 b);
+
 // Returns a normalized Vec2
 Vec2 Vec2Normalize(Vec2 a);
 
@@ -45,6 +51,9 @@ Vec2 Vec2Max(Vec2 a, Vec2 b);
 // Clamps a Vec2 between a min and max value
 Vec2 Vec2Clamp(Vec2 a, Vec2 min, Vec2 max);
 
+// ----------------------------------------------------------------
+// Vec3
+// ----------------------------------------------------------------
 struct Vec3
 {
     f32 x;
@@ -91,6 +100,9 @@ Vec3 Vec3Max(Vec3 a, Vec3 b);
 // Clamps a Vec3 between a min and max value
 Vec3 Vec3Clamp(Vec3 a, Vec3 min, Vec3 max);
 
+// ----------------------------------------------------------------
+// Vec4
+// ----------------------------------------------------------------
 struct Vec4
 {
     f32 x;
@@ -135,6 +147,9 @@ Vec4 Vec4Max(Vec4 a, Vec4 b);
 // Clamps a Vec4 between a min and max value
 Vec4 Vec4Clamp(Vec4 a, Vec4 min, Vec4 max);
 
+// ----------------------------------------------------------------
+// Mat4
+// ----------------------------------------------------------------
 struct Mat4
 {
     f32 m[4][4];
@@ -165,6 +180,39 @@ Mat4 Mat4Perspective(f32 fov, f32 aspect, f32 near, f32 far);
 Mat4 Mat4Orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);
 
 // ----------------------------------------------------------------
+// Box2
+// ----------------------------------------------------------------
+struct Box2
+{
+    Vec2 min;
+    Vec2 max;
+};
+
+// Returns true if a box contains a point
+b32 Box2ContainsPoint(Box2 box, Vec2 point);
+
+// Returns true if two boxes overlap
+b32 Box2Overlap(Box2 a, Box2 b);
+
+// ----------------------------------------------------------------
+// Box3
+// ----------------------------------------------------------------
+struct Box3
+{
+    Vec3 min;
+    Vec3 max;
+};
+
+// ----------------------------------------------------------------
+// Point2D
+// ----------------------------------------------------------------
+struct Point2D
+{
+    s32 x;
+    s32 y;
+};
+
+// ----------------------------------------------------------------
 // Math utility functions
 // ----------------------------------------------------------------
 
@@ -177,6 +225,12 @@ f32 DegToRad(f32 degrees);
 // Converts radians to degrees
 f32 RadToDeg(f32 radians);
 
+// Returns the floor of a number
+f32 Floor(f32 a);
+
+// Returns the ceiling of a number
+f32 Ceil(f32 a);
+
 // Sinus function
 f32 Sin(f32 a);
 
@@ -185,6 +239,8 @@ f32 Cos(f32 a);
 
 // Tangent function
 f32 Tan(f32 a);
+
+
 
 // Arc tangent function
 f32 Atan2(f32 y, f32 x);
