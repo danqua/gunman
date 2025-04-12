@@ -1,7 +1,7 @@
 #include "render.h"
 #include <glad/glad.h>
 
-#define MAX_LINE_VERTICES 1024
+#define MAX_LINE_VERTICES 1024 * 8
 
 struct LineVertex
 {
@@ -75,6 +75,7 @@ void RendererBegin()
 {
     renderer.line_vertex_count = 0;
     renderer.filled_rect_vertex_count = 0;
+    renderer.z_order = 0.0f;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
