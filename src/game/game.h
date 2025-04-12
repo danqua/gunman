@@ -7,12 +7,13 @@
 #include "render/camera.h"
 
 #include "game/entity.h"
+#include "game/level.h"
 
 struct GameState
 {
     Camera camera;
     Entity* player;
-    EntityManager entity_manager;
+    Level level;
 };
 
 struct Game

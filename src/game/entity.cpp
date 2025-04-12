@@ -1,14 +1,6 @@
 #include "entity.h"
+#include "game.h"
 #include "render/render.h"
-
-static void UpdateMovement(Transform* transform, Movement* movement, f32 dt)
-{
-    Vec2 amount = Vec2Multiply(movement->velocity, movement->speed * dt);
-    transform->position = Vec2Add(transform->position, amount);
-    movement->velocity = Vec2Multiply(movement->velocity, movement->friction);
-    if (Abs(movement->velocity.x) < 1e-4f) movement->velocity.x = 0.0f;
-    if (Abs(movement->velocity.y) < 1e-4f) movement->velocity.y = 0.0f;
-}
 
 void EntityManagerInit(EntityManager* entity_manager, Arena* arena)
 {
@@ -39,21 +31,6 @@ void DestroyEntity(EntityManager* entity_manager, Entity* entity)
     }
 }
 
-void UpdateEntities(EntityManager* entity_manager, f32 dt)
-{
-    for (u64 i = 0; i < entity_manager->entity_count; ++i)
-    {
-        Entity* entity = entity_manager->entities[i];
-
-        switch (entity->type)
-        {
-            case ENTITY_PLAYER: {
-                UpdateMovement(&entity->transform, &entity->movement, dt);
-            } break;
-        }
-    }
-}
-
 void DrawEntities(EntityManager* entity_manager)
 {
     for (u64 i = 0; i < entity_manager->entity_count; ++i)
@@ -63,8 +40,12 @@ void DrawEntities(EntityManager* entity_manager)
         f32 radius = entity->collider.radius;
         Vec2 forward = EntityGetForward(entity);
         Vec2 target = Vec2Add(position, Vec2Multiply(forward, radius));
+
+        Vec2 min = Vec2Subtract(position, Vec2{ radius, radius });
+        Vec2 max = Vec2Add(position, Vec2{ radius, radius });
+        Vec2 size = Vec2Subtract(max, min);
         RendererDrawLine2D(position, target, COLOR_YELLOW);
-        RendererDrawCircle2D(position, radius, COLOR_GREEN);
+        RendererDrawRect2D(min, size, COLOR_RED);
     }
 }
 
@@ -74,4 +55,20 @@ Vec2 EntityGetForward(Entity* entity)
     result.x = Cos(entity->transform.angle);
     result.y = Sin(entity->transform.angle);
     return result;
+}
+
+b32 EntityHasFlag(Entity* entity, u32 flag)
+{
+    b32 result = (entity->flags & flag) == flag;
+    return result;
+}
+
+void EntitySetFlag(Entity* entity, u32 flag)
+{
+    entity->flags |= flag;
+}
+
+void EntityClearFlag(Entity* entity, u32 flag)
+{
+    entity->flags &= ~flag;
 }
