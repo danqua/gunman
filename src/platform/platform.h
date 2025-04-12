@@ -25,5 +25,11 @@ void* PlatformAllocateMemory(u64 size);
 // Free memory.
 void PlatformFreeMemory(void* memory);
 
+// Copy memory.
+void* PlatformCopyMemory(void* dest, const void* src, u64 size);
+
+// Clear memory.
+void* PlatformClearMemory(void* dest, u64 size);
+
 // Log a message to the console.
 void PlatformLog(const char* message, ...);

@@ -18,6 +18,7 @@ void ArenaInit(Arena* arena, u64 size, void* user_buffer)
     arena->base = (u8*)user_buffer;
     arena->size = size;
     arena->offset = 0;
+    memset(arena->base, 0, size);
 }
 
 void ArenaReset(Arena* arena)

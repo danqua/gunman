@@ -140,6 +140,16 @@ void PlatformFreeMemory(void* memory)
     free(memory);
 }
 
+void* PlatformCopyMemory(void* dest, const void* src, u64 size)
+{
+    return memcpy(dest, src, size);
+}
+
+void* PlatformClearMemory(void* dest, u64 size)
+{
+    return memset(dest, 0, size);
+}
+
 void PlatformLog(const char* message, ...)
 {
     va_list args;
