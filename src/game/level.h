@@ -36,9 +36,7 @@ struct Level
     Arena arena;
     u32 width;
     u32 height;
-
-    u32* tiles;
-    Tile* tile_data;
+    Tile* tiles;
 
     EntityManager entity_manager;
 };
@@ -53,13 +51,10 @@ void LevelFree(Level* level);
 void LevelSetTile(Level* level, u32 x, u32 y, u32 tile_type);
 
 // Returns the tile at the specified position.
-u32 LevelGetTile(Level* level, u32 x, u32 y);
+Tile* LevelGetTile(Level* level, u32 x, u32 y);
 
 // Returns true if the entity can move to the specified position.
 b32 LevelCanMoveTo(Level* level, Entity* entity, f32 x, f32 y);
-
-// Returns all the tiles occupied by the aabb.
-u64 LevelGetTiles(Level* level, Vec2 min, Vec2 max, u32* tiles, u64 tile_count);
 
 // Returns true if the tile is solid.
 b32 IsSolid(Level* level, u32 x, u32 y);

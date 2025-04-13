@@ -9,8 +9,7 @@ void LevelInit(Level* level, u32 width, u32 height, Arena* arena)
 
     level->width = width;
     level->height = height;
-    level->tiles = (u32*)ArenaPushSize(&level->arena, width * height * sizeof(u32));
-    level->tile_data = (Tile*)ArenaPushSize(&level->arena, width * height * sizeof(Tile));
+    level->tiles = (Tile*)ArenaPushSize(&level->arena, width * height * sizeof(Tile));
 }
 
 void LevelFree(Level* level)
@@ -21,9 +20,9 @@ void LevelFree(Level* level)
 void LevelSetTile(Level* level, u32 x, u32 y, u32 tile_type)
 {
     u32 index = y * level->width + x;
-    level->tiles[index] = tile_type;
+    level->tiles[index].type = tile_type;
 
-    Tile* tile = &level->tile_data[index];
+    Tile* tile = &level->tiles[index];
     tile->x = x;
     tile->y = y;
     tile->type = tile_type;
@@ -36,10 +35,10 @@ void LevelSetTile(Level* level, u32 x, u32 y, u32 tile_type)
     }
 }
 
-u32 LevelGetTile(Level* level, u32 x, u32 y)
+Tile* LevelGetTile(Level* level, u32 x, u32 y)
 {
     u32 index = y * level->width + x;
-    return level->tiles[index];
+    return &level->tiles[index];
 }
 
 b32 LevelCanMoveTo(Level* level, Entity* entity, f32 x, f32 y)
@@ -63,8 +62,8 @@ b32 LevelCanMoveTo(Level* level, Entity* entity, f32 x, f32 y)
     {
         for (u32 x = left_tile; x <= right_tile; ++x)
         {
-            u32 tile = LevelGetTile(level, x, y);
-            if (tile != 0)
+            Tile* tile = LevelGetTile(level, x, y);
+            if (tile->type == TILE_WALL)
             {
                 return false;
             }
@@ -74,40 +73,10 @@ b32 LevelCanMoveTo(Level* level, Entity* entity, f32 x, f32 y)
     return true;
 }
 
-u64 LevelGetTiles(Level* level, Vec2 min, Vec2 max, u32* tiles, u64 tile_count)
-{
-    s32 min_x = (s32)Min(min.x, max.x);
-    s32 max_x = (s32)Max(min.x, max.x);
-    s32 min_y = (s32)Min(min.y, max.y);
-    s32 max_y = (s32)Max(min.y, max.y);
-
-    u64 tile_index = 0;
-
-    for (s32 y = min_y; y <= max_y; ++y)
-    {
-        for (s32 x = min_x; x <= max_x; ++x)
-        {
-            u32 tile = LevelGetTile(level, x, y);
-
-            if (tile != 0)
-            {
-                tiles[tile_index] = y * level->width + x;
-                tile_index++;
-
-                if (tile_index >= tile_count)
-                {
-                    return tile_count;
-                }
-            }
-        }
-    }
-    return tile_index;
-}
-
 b32 IsSolid(Level* level, u32 x, u32 y)
 {
-    u32 tile = LevelGetTile(level, x, y);
-    return tile == 1;
+    Tile* tile = LevelGetTile(level, x, y);
+    return tile->type == TILE_WALL;
 }
 
 RayCastInfo LevelCastRay(Level* level, Vec2 origin, Vec2 direction, u32 max_depth)
@@ -152,9 +121,9 @@ RayCastInfo LevelCastRay(Level* level, Vec2 origin, Vec2 direction, u32 max_dept
             side = true;
         }
 
-        u32 tile = LevelGetTile(level, level_position.x, level_position.y);
+        Tile* tile = LevelGetTile(level, level_position.x, level_position.y);
 
-        if (tile != 0)
+        if (tile->type == TILE_WALL)
         {
             hit = true;
         }
