@@ -1,0 +1,1 @@
+- Add flush function to renderer and decrease memroy usage

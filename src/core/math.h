@@ -51,6 +51,12 @@ Vec2 Vec2Max(Vec2 a, Vec2 b);
 // Clamps a Vec2 between a min and max value
 Vec2 Vec2Clamp(Vec2 a, Vec2 min, Vec2 max);
 
+// Returns the angle between two Vec2s in radians
+f32 Vec2Angle(Vec2 a, Vec2 b);
+
+// Returns true if two Vec2s are equal
+b32 Vec2Equal(Vec2 a, Vec2 b);
+
 // ----------------------------------------------------------------
 // Vec3
 // ----------------------------------------------------------------
@@ -193,6 +199,9 @@ b32 Box2ContainsPoint(Box2 box, Vec2 point);
 
 // Returns true if two boxes overlap
 b32 Box2Overlap(Box2 a, Box2 b);
+
+// Returns the center of a box
+Vec2 Box2Center(Box2 box);
 
 // ----------------------------------------------------------------
 // Box3

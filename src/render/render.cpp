@@ -1,7 +1,7 @@
 #include "render.h"
 #include <glad/glad.h>
 
-#define MAX_LINE_VERTICES 1024 * 8
+#define MAX_LINE_VERTICES 1024 * 16
 
 struct LineVertex
 {
@@ -53,6 +53,8 @@ void RendererInit(Arena* arena, s32 width, s32 height)
     gladLoadGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    glEnable(GL_DEPTH_TEST);
+
     renderer.line_shader = ShaderLoad("shaders/line.vert", "shaders/line.frag");
     renderer.line_vertex_buffer = VertexBufferCreate(nullptr, sizeof(LineVertex) * MAX_LINE_VERTICES);
     renderer.line_vertices = (LineVertex*)ArenaPushSize(arena, sizeof(LineVertex) * MAX_LINE_VERTICES);
@@ -76,8 +78,9 @@ void RendererBegin()
     renderer.line_vertex_count = 0;
     renderer.filled_rect_vertex_count = 0;
     renderer.z_order = 0.0f;
+    renderer.increase_z = true;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void RendererEnd()

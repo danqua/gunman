@@ -29,6 +29,8 @@ struct Movement
     f32 speed;      // Linear speed.
 };
 
+void UpdateTransformMovement(Transform* transform, Movement* movement, f32 dt);
+
 enum CollisionLayer
 {
     LAYER_DEFAULT = 1 << 0,
@@ -38,11 +40,15 @@ enum CollisionLayer
     LAYER_TRIGGER = 1 << 4
 };
 
+struct Entity;
+
 struct Collider
 {
     f32 radius;
     u32 layer;
     u32 mask;
+
+    void(*on_collision)(Entity* entity, Entity* other);
 };
 
 enum EntityFlag
@@ -60,8 +66,10 @@ struct Entity
     Collider collider;
     u32 flags;
 
-    u32 tiles[4];         // Tiles the entity is currently in.
-    u64 tile_count;       // Number of tiles the entity is in.
+    u32 tile_x;
+    u32 tile_y;
+    u32 last_tile_x;
+    u32 last_tile_y;
 };
 
 struct EntityManager
@@ -80,6 +88,9 @@ Entity* SpawnEntity(EntityManager* entity_manager);
 // Destroys an entity.
 void DestroyEntity(EntityManager* entity_manager, Entity* entity);
 
+// Update all entities.
+void UpdateEntities(EntityManager* entity_manager, f32 dt);
+
 // Draws all entities.
 void DrawEntities(EntityManager* entity_manager);
 
@@ -94,3 +105,6 @@ void EntitySetFlag(Entity* entity, u32 flag);
 
 // Clears a flag on the entity.
 void EntityClearFlag(Entity* entity, u32 flag);
+
+// Returns the AABB of the entity.
+Box2 EntityGetAABB(Entity* entity);

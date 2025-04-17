@@ -1,6 +1,21 @@
 #include "entity.h"
 #include "game.h"
+#include "platform/platform.h"
 #include "render/render.h"
+
+static void ApplyFriction(Movement* movement)
+{
+    movement->velocity = Vec2Multiply(movement->velocity, movement->friction);
+    if (Abs(movement->velocity.x) < 1e-4f) movement->velocity.x = 0.0f;
+    if (Abs(movement->velocity.y) < 1e-4f) movement->velocity.y = 0.0f;
+}
+
+void UpdateTransformMovement(Transform* transform, Movement* movement, f32 dt)
+{
+    transform->last_position = transform->position;
+    transform->position = Vec2Add(transform->position, Vec2Multiply(movement->velocity, dt));
+    ApplyFriction(movement);
+}
 
 void EntityManagerInit(EntityManager* entity_manager, Arena* arena)
 {
@@ -28,6 +43,22 @@ void DestroyEntity(EntityManager* entity_manager, Entity* entity)
             entity_manager->entity_count--;
             break;
         }
+    }
+}
+
+void UpdateEntities(EntityManager* entity_manager, f32 dt)
+{
+    for (u64 i = 0; i < entity_manager->entity_count; ++i)
+    {
+        Entity* entity = entity_manager->entities[i];
+
+        entity->last_tile_x = (u32)entity->transform.position.x;
+        entity->last_tile_y = (u32)entity->transform.position.y;
+
+        UpdateTransformMovement(&entity->transform, &entity->movement, dt);
+
+        entity->tile_x = (u32)entity->transform.position.x;
+        entity->tile_y = (u32)entity->transform.position.y;
     }
 }
 
@@ -71,4 +102,14 @@ void EntitySetFlag(Entity* entity, u32 flag)
 void EntityClearFlag(Entity* entity, u32 flag)
 {
     entity->flags &= ~flag;
+}
+
+Box2 EntityGetAABB(Entity* entity)
+{
+    Box2 result;
+    result.min.x = entity->transform.position.x - entity->collider.radius;
+    result.min.y = entity->transform.position.y - entity->collider.radius;
+    result.max.x = entity->transform.position.x + entity->collider.radius;
+    result.max.y = entity->transform.position.y + entity->collider.radius;
+    return result;
 }

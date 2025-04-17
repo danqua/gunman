@@ -4,18 +4,23 @@
 #include "render/render.h"
 #include "render/image.h"
 
-static Box2 GetEntityBoundingBox(Entity* entity)
+void Trigger_OpenDoor(Level* level, Entity* entity)
 {
-    Box2 box;
-    box.min = Vec2{ entity->transform.position.x - entity->collider.radius, entity->transform.position.y - entity->collider.radius };
-    box.max = Vec2{ entity->transform.position.x + entity->collider.radius, entity->transform.position.y + entity->collider.radius };
-    return box;
+    Tile* tile = LevelGetTile(level, entity->tile_x, entity->tile_y);
+    Door* door = &level->doors[tile->door_index];
+    DoorOpen(door);
 }
 
-static void HandleCollision(GameState* state)
+void Trigger_CloseDoor(Level* level, Entity* entity)
 {
-    Level* level = &state->level;
-    EntityManager* entity_manager = &level->entity_manager;
+    Tile* tile = LevelGetTile(level, entity->tile_x, entity->tile_y);
+    Door* door = &level->doors[tile->door_index];
+    DoorClose(door, level);
+}
+
+void Trigger_StayDoor(Level* level, Entity* entity)
+{
+    
 }
 
 void GameInit(Game* game)
@@ -32,7 +37,6 @@ void GameInit(Game* game)
     game->state.camera = CameraCreateOrthographic(0.0f, 800.0f / 64.0f, 600.0f / 64.0f, 0.0f, -1.0f, 1.0f);
 
     // Game state initialization
-
     Image wall_image = ImageLoad("maps/test.bmp");
     u32* pixels = (u32*)wall_image.pixels;
 
@@ -40,9 +44,9 @@ void GameInit(Game* game)
 
     game->state.player = SpawnEntity(&game->state.level.entity_manager);
     game->state.player->type = ENTITY_PLAYER;
-    game->state.player->transform.angle = PI * 0.25f;
+    game->state.player->transform.angle = 0.0f;
     game->state.player->collider.radius = 0.3f;
-    game->state.player->movement.speed = 0.5f;
+    game->state.player->movement.speed = 32.0f;
     game->state.player->movement.friction = 0.85f;
 
     for (s32 y = 0; y < wall_image.height; ++y)
@@ -55,6 +59,10 @@ void GameInit(Game* game)
             {
                 LevelSetTile(&game->state.level, x, y, TILE_WALL);
             }
+            else if (pixel == 0xff00ff00)
+            {
+                LevelSetTile(&game->state.level, x, y, TILE_DOOR);
+            }
             else if (pixel == 0xffff0000)
             {
                 game->state.player->transform.position.x = x + 0.5f;
@@ -62,6 +70,14 @@ void GameInit(Game* game)
             }
         }
     }
+
+    Tile* tile = LevelGetTile(&game->state.level, 1, 3);
+    tile->flags |= TF_TRIGGER;
+    tile->on_enter = Trigger_OpenDoor;
+    tile->on_exit = Trigger_CloseDoor;
+    tile->on_stay = Trigger_StayDoor;
+    tile->state.trigger.tile_x = 2;
+    tile->state.trigger.tile_y = 4;
 
     ImageFree(&wall_image);
 
@@ -99,16 +115,12 @@ b32 EntityTryMove(Entity* entity, Level* level)
     Transform* transform = &entity->transform;
     Collider* collider = &entity->collider;
 
-    Vec2 min, max;
-    min.x = transform->position.x - collider->radius;
-    min.y = transform->position.y - collider->radius;
-    max.x = transform->position.x + collider->radius;
-    max.y = transform->position.y + collider->radius;
+    Box2 box = EntityGetAABB(entity);
 
-    s32 xmin = (s32)min.x;
-    s32 ymin = (s32)min.y;
-    s32 xmax = (s32)max.x;
-    s32 ymax = (s32)max.y;
+    s32 xmin = (s32)box.min.x;
+    s32 ymin = (s32)box.min.y;
+    s32 xmax = (s32)box.max.x;
+    s32 ymax = (s32)box.max.y;
 
     for (s32 y = ymin; y <= ymax; ++y)
     {
@@ -123,43 +135,6 @@ b32 EntityTryMove(Entity* entity, Level* level)
     return true;
 }
 
-void EntityClipMove(Entity* entity, Vec2 direction, Level* level)
-{
-    Transform* transform = &entity->transform;
-    Movement* movement = &entity->movement;
-
-    Vec2 position = transform->position;
-
-    transform->position = Vec2Add(position, direction);
-
-    if (EntityTryMove(entity, level))
-    {
-        return;
-    }
-
-    if (direction.x != 0.0f)
-    {
-        transform->position.x = position.x + direction.x;
-        transform->position.y = position.y;
-        if (EntityTryMove(entity, level))
-        {
-            return;
-        }
-    }
-
-    if (direction.y != 0.0f)
-    {
-        transform->position.x = position.x;
-        transform->position.y = position.y + direction.y;
-        if (EntityTryMove(entity, level))
-        {
-            return;
-        }
-    }
-
-    transform->position = position;
-}
-
 void EntityClipMoveVel(Entity* entity, Level* level)
 {
     Transform* transform = &entity->transform;
@@ -168,6 +143,7 @@ void EntityClipMoveVel(Entity* entity, Level* level)
     Vec2 position = transform->position;
     Vec2 velocity = movement->velocity;
 
+    transform->last_position = position;
     transform->position = Vec2Add(position, velocity);
 
     if (EntityTryMove(entity, level))
@@ -202,15 +178,6 @@ void EntityClipMoveVel(Entity* entity, Level* level)
     transform->position = position;
 }
 
-void ApplyFriction(Movement* movement)
-{
-    movement->velocity = Vec2Multiply(movement->velocity, movement->friction);
-    if (Abs(movement->velocity.x) < 1e-4f) movement->velocity.x = 0.0f;
-    if (Abs(movement->velocity.y) < 1e-4f) movement->velocity.y = 0.0f;
-}
-
-
-
 void GameFixedUpdate(Game* game, f32 dt)
 {
     Entity* player = game->state.player;
@@ -229,7 +196,7 @@ void GameFixedUpdate(Game* game, f32 dt)
         player->movement.velocity = Vec2Subtract(player->movement.velocity, forward);
     }
 
-    EntityClipMoveVel(player, &game->state.level);
+    //EntityClipMoveVel(player, &game->state.level);
 
     if (game->input.key_down[KEY_LEFT])
     {
@@ -240,8 +207,6 @@ void GameFixedUpdate(Game* game, f32 dt)
         player->transform.angle += 2.0f * dt;
     }
 
-    ApplyFriction(&player->movement);
-
 
     if (player->transform.angle > 2 * PI)
     {
@@ -251,6 +216,9 @@ void GameFixedUpdate(Game* game, f32 dt)
     {
         player->transform.angle += 2 * PI;
     }
+
+    LevelUpdate(&game->state.level, dt);
+
 }
 
 void GameUpdate(Game* game, f32 dt)
@@ -282,6 +250,20 @@ void GameUpdate(Game* game, f32 dt)
         camera->position.y = game->state.level.height - camera->projection.orthographic.bottom;
     }
 
+
+    Vec2 origin = game->state.player->transform.position;
+    Vec2 direction = EntityGetForward(game->state.player);
+    RayCastInfo ray_cast_info = LevelCastRay(&game->state.level, origin, direction);
+
+    if (ray_cast_info.hit)
+    {
+        Tile* tile = ray_cast_info.tile;
+
+        if (tile->type == TILE_DOOR && ray_cast_info.perp_distance < 0.5f && game->input.key_pressed[KEY_SPACE])
+        {
+            DoorOpen(&game->state.level.doors[tile->door_index]);
+        }
+    }
 }
 
 void GameRender(Game* game)
@@ -289,33 +271,59 @@ void GameRender(Game* game)
     RendererSetCamera(&game->state.camera);
     RendererBegin();
 
+    for (u32 y = 0; y < game->state.level.height; ++y)
+    {
+        for (u32 x = 0; x < game->state.level.width; ++x)
+        {
+            Tile* tile = LevelGetTile(&game->state.level, x, y);
+            Vec2 position = Vec2{ (f32)x, (f32)y };
+            Vec2 size = Vec2{ 1.0f, 1.0f };
+            if (tile->type == TILE_WALL)
+            {
+                RendererDrawFilleRect2D(position, size, COLOR_GRAY);
+            }
+            else if (tile->type == TILE_DOOR)
+            {
+                Door* door = &game->state.level.doors[tile->door_index];
+                if (door->state == DoorState_Open)
+                {
+                    RendererDrawFilleRect2D(position, size, COLOR_GREEN);
+                }
+                else
+                {
+                    RendererDrawFilleRect2D(position, size, COLOR_RED);
+                }
+            }
+            else
+            {
+                if (tile->flags & TF_TRIGGER)
+                {
+                    if (tile->state.trigger.active)
+                    {
+                        RendererDrawFilleRect2D(position, size, COLOR_GREEN);
+                    }
+                    else
+                    {
+                        RendererDrawFilleRect2D(position, size, COLOR_ORANGE);
+                    }
+                }
+            }
+        }
+    }
+
     // Draw grid
     for (u32 y = 0; y < game->state.level.height; ++y)
     {
         Vec2 line_start = Vec2{ 0.0f, (f32)y };
         Vec2 line_end = Vec2{ (f32)game->state.level.width, (f32)y };
-        RendererDrawLine2D(line_start, line_end, COLOR_GRAY);
+        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
     }
 
     for (u32 x = 0; x < game->state.level.width; ++x)
     {
         Vec2 line_start = Vec2{ (f32)x, 0.0f };
         Vec2 line_end = Vec2{ (f32)x, (f32)game->state.level.height };
-        RendererDrawLine2D(line_start, line_end, COLOR_GRAY);
-    }
-
-    for (u32 y = 0; y < game->state.level.height; ++y)
-    {
-        for (u32 x = 0; x < game->state.level.width; ++x)
-        {
-            u32 tile = LevelGetTile(&game->state.level, x, y);
-            if (tile == 1)
-            {
-                Vec2 position = Vec2{ (f32)x, (f32)y };
-                Vec2 size = Vec2{ 1.0f, 1.0f };
-                RendererDrawFilleRect2D(position, size, COLOR_GRAY);
-            }
-        }
+        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
     }
 
     DrawEntities(&game->state.level.entity_manager);
