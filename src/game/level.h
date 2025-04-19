@@ -4,6 +4,7 @@
 
 #include "game/entity.h"
 #include "game/door.h"
+#include "render/render.h"
 
 #define MAX_ENTITIES_PER_TILE 8
 
@@ -111,3 +112,5 @@ b32 IsTrigger(Level* level, u32 x, u32 y);
 RayCastInfo LevelCastRay(Level* level, Vec2 origin, Vec2 direction, u32 max_depth = 16);
 
 
+// Draws the level in 2D.
+void LevelDraw2D(Level* level, Camera* camera);

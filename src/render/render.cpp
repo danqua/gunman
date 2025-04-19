@@ -3,6 +3,17 @@
 
 #define MAX_LINE_VERTICES 1024 * 16
 
+
+static Vec4 ColorToVec4(Color color)
+{
+    Vec4 result;
+    result.x = color.r / 255.0f;
+    result.y = color.g / 255.0f;
+    result.z = color.b / 255.0f;
+    result.w = color.a / 255.0f;
+    return result;
+}
+
 struct LineVertex
 {
     Vec3 position;
@@ -14,18 +25,79 @@ struct LineVertex
 VertexLayout LineVertex::layout = {
     2, { 3, 4 }
 };
+
+enum PrimitiveType
+{
+    PrimitiveType_Lines,
+    PrimitiveType_Triangles,
+    PrimitiveType_Quads,
+};
+
+struct PrimitiveRenderer
+{
+    PrimitiveType type;
+    LineVertex* vertices;
+    VertexBuffer* vertex_buffer;
+    u32 vertex_count;
+};
+
+PrimitiveRenderer PrimitiveRendererCreate(PrimitiveType type, Arena* arena, u32 max_vertices)
+{
+    PrimitiveRenderer result = {};
+    result.vertex_buffer = VertexBufferCreate(nullptr, sizeof(LineVertex) * max_vertices);
+    result.vertices = (LineVertex*)ArenaPushSize(arena, sizeof(LineVertex) * max_vertices);
+    result.type = type;
+    result.vertex_count = 0;
+    return result;
+}
+
+void PrimitiveRendererDestroy(PrimitiveRenderer* primitive_renderer)
+{
+    VertexBufferDestroy(primitive_renderer->vertex_buffer);
+    primitive_renderer->vertices = nullptr;
+}
+
+void PrimitiveRendererReset(PrimitiveRenderer* primitive_renderer)
+{
+    primitive_renderer->vertex_count = 0;
+}
+
+void PrimitiveRendererAddVertex(PrimitiveRenderer* primitive_renderer, Vec3 position, Color color)
+{
+    primitive_renderer->vertices[primitive_renderer->vertex_count].position = position;
+    primitive_renderer->vertices[primitive_renderer->vertex_count].color = ColorToVec4(color);
+    primitive_renderer->vertex_count++;
+}
+
+void PrimitiveRendererDraw(PrimitiveRenderer* primitive_renderer)
+{
+    VertexBufferBind(primitive_renderer->vertex_buffer);
+    VertexBufferUpdate(primitive_renderer->vertex_buffer, primitive_renderer->vertices, sizeof(LineVertex) * primitive_renderer->vertex_count);
+    VertexBufferSetLayout(primitive_renderer->vertex_buffer, &LineVertex::layout);
+
+    if (primitive_renderer->type == PrimitiveType_Lines)
+    {
+        glDrawArrays(GL_LINES, 0, primitive_renderer->vertex_count);
+    }
+    else if (primitive_renderer->type == PrimitiveType_Triangles)
+    {
+        glDrawArrays(GL_TRIANGLES, 0, primitive_renderer->vertex_count);
+    }
+    else if (primitive_renderer->type == PrimitiveType_Quads)
+    {
+        glDrawArrays(GL_QUADS, 0, primitive_renderer->vertex_count);
+    }
+}
+
 struct Renderer
 {
     Mat4 view_matrix;           // View matrix for the current frame.
     Mat4 projection_matrix;     // Projection matrix for the current frame.
 
     Shader* line_shader;
-    VertexBuffer* line_vertex_buffer;
-    LineVertex* line_vertices;
-    LineVertex* filled_rect_vertices;
-    u32 line_vertex_count;
-    u32 filled_rect_vertex_count;
-
+    PrimitiveRenderer line_renderer;
+    PrimitiveRenderer rect_renderer;
+    PrimitiveRenderer quad_renderer;
 
     f32 z_order;
     b32 increase_z;
@@ -38,32 +110,26 @@ static void IncreaseZOrder()
     renderer.z_order += 0.0001f;
 }
 
-static Vec4 ColorToVec4(Color color)
-{
-    Vec4 result;
-    result.x = color.r / 255.0f;
-    result.y = color.g / 255.0f;
-    result.z = color.b / 255.0f;
-    result.w = color.a / 255.0f;
-    return result;
-}
 
 void RendererInit(Arena* arena, s32 width, s32 height)
 {
     gladLoadGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_DEPTH_TEST);
 
     renderer.line_shader = ShaderLoad("shaders/line.vert", "shaders/line.frag");
-    renderer.line_vertex_buffer = VertexBufferCreate(nullptr, sizeof(LineVertex) * MAX_LINE_VERTICES);
-    renderer.line_vertices = (LineVertex*)ArenaPushSize(arena, sizeof(LineVertex) * MAX_LINE_VERTICES);
-    renderer.filled_rect_vertices = (LineVertex*)ArenaPushSize(arena, sizeof(LineVertex) * MAX_LINE_VERTICES);
+    renderer.line_renderer = PrimitiveRendererCreate(PrimitiveType_Lines, arena, MAX_LINE_VERTICES);
+    renderer.rect_renderer = PrimitiveRendererCreate(PrimitiveType_Quads, arena, MAX_LINE_VERTICES);
+    renderer.quad_renderer = PrimitiveRendererCreate(PrimitiveType_Quads, arena, MAX_LINE_VERTICES);
 }
 
 void RendererShutdown()
 {
-    VertexBufferDestroy(renderer.line_vertex_buffer);
+    PrimitiveRendererDestroy(&renderer.line_renderer);
+    PrimitiveRendererDestroy(&renderer.rect_renderer);
+    PrimitiveRendererDestroy(&renderer.quad_renderer);
     ShaderDestroy(renderer.line_shader);
 }
 
@@ -75,8 +141,10 @@ void RendererSetCamera(Camera* camera)
 
 void RendererBegin()
 {
-    renderer.line_vertex_count = 0;
-    renderer.filled_rect_vertex_count = 0;
+    PrimitiveRendererReset(&renderer.line_renderer);
+    PrimitiveRendererReset(&renderer.rect_renderer);
+    PrimitiveRendererReset(&renderer.quad_renderer);
+
     renderer.z_order = 0.0f;
     renderer.increase_z = true;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -89,32 +157,18 @@ void RendererEnd()
     ShaderBind(renderer.line_shader);
     ShaderSetMat4(renderer.line_shader, "u_view", renderer.view_matrix);
     ShaderSetMat4(renderer.line_shader, "u_projection", renderer.projection_matrix);
-    VertexBufferBind(renderer.line_vertex_buffer);
-    VertexBufferUpdate(renderer.line_vertex_buffer,
-                       renderer.line_vertices,
-                       sizeof(LineVertex) * renderer.line_vertex_count);
 
-    VertexBufferSetLayout(renderer.line_vertex_buffer, &LineVertex::layout);
-    glDrawArrays(GL_LINES, 0, renderer.line_vertex_count);
-
-    VertexBufferUpdate(renderer.line_vertex_buffer,
-                       renderer.filled_rect_vertices,
-                       sizeof(LineVertex) * renderer.filled_rect_vertex_count);
-
-    glDrawArrays(GL_QUADS, 0, renderer.filled_rect_vertex_count);
+    PrimitiveRendererDraw(&renderer.line_renderer);
+    PrimitiveRendererDraw(&renderer.rect_renderer);
+    PrimitiveRendererDraw(&renderer.quad_renderer);
 
     glDisable(GL_BLEND);
 }
 
 void RendererDrawLine2D(Vec2 start, Vec2 end, Color color)
 {
-    LineVertex* v1 = &renderer.line_vertices[renderer.line_vertex_count++];
-    v1->position = Vec3{ start.x, start.y, renderer.z_order };
-    v1->color = ColorToVec4(color);
-
-    LineVertex* v2 = &renderer.line_vertices[renderer.line_vertex_count++];
-    v2->position = Vec3{ end.x, end.y, renderer.z_order };
-    v2->color = ColorToVec4(color);
+    PrimitiveRendererAddVertex(&renderer.line_renderer, Vec3{ start.x, start.y, renderer.z_order }, color);
+    PrimitiveRendererAddVertex(&renderer.line_renderer, Vec3{ end.x, end.y, renderer.z_order }, color);
 
     if (renderer.increase_z)
     {
@@ -160,10 +214,22 @@ void RendererDrawFilleRect2D(Vec2 position, Vec2 size, Color color)
     Vec3 v3 = { position.x + size.x, position.y + size.y, renderer.z_order };
     Vec3 v4 = { position.x, position.y + size.y, renderer.z_order };
 
-    renderer.filled_rect_vertices[renderer.filled_rect_vertex_count++] = { v1, ColorToVec4(color) };
-    renderer.filled_rect_vertices[renderer.filled_rect_vertex_count++] = { v2, ColorToVec4(color) };
-    renderer.filled_rect_vertices[renderer.filled_rect_vertex_count++] = { v3, ColorToVec4(color) };
-    renderer.filled_rect_vertices[renderer.filled_rect_vertex_count++] = { v4, ColorToVec4(color) };
+    PrimitiveRendererAddVertex(&renderer.rect_renderer, v1, color);
+    PrimitiveRendererAddVertex(&renderer.rect_renderer, v2, color);
+    PrimitiveRendererAddVertex(&renderer.rect_renderer, v3, color);
+    PrimitiveRendererAddVertex(&renderer.rect_renderer, v4, color);
 
     IncreaseZOrder();
+}
+
+void RendererDrawQuad(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color)
+{
+    PrimitiveRendererAddVertex(&renderer.quad_renderer, v1, color);
+    PrimitiveRendererAddVertex(&renderer.quad_renderer, v2, color);
+    PrimitiveRendererAddVertex(&renderer.quad_renderer, v3, color);
+    PrimitiveRendererAddVertex(&renderer.quad_renderer, v4, color);
+}
+
+void RendererDrawQuadLines(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color)
+{
 }

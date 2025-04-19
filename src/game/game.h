@@ -13,6 +13,7 @@ struct GameState
 {
     Camera camera;
     Entity* player;
+    f32 player_fov;
     Level level;
 };
 

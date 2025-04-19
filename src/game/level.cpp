@@ -314,3 +314,75 @@ RayCastInfo LevelCastRay(Level* level, Vec2 origin, Vec2 direction, u32 max_dept
     result.perp_distance = perp_dist;
     return result;
 }
+
+static void DrawGrid2D(Level* level, Color color)
+{
+    for (u32 y = 0; y < level->height; ++y)
+    {
+        Vec2 line_start = Vec2{ 0.0f, (f32)y };
+        Vec2 line_end = Vec2{ (f32)level->width, (f32)y };
+        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
+    }
+
+    for (u32 x = 0; x < level->width; ++x)
+    {
+        Vec2 line_start = Vec2{ (f32)x, 0.0f };
+        Vec2 line_end = Vec2{ (f32)x, (f32)level->height };
+        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
+    }
+}
+
+static void DrawWalls2D(Level* level)
+{
+    for (u32 y = 0; y < level->height; ++y)
+    {
+        for (u32 x = 0; x < level->width; ++x)
+        {
+            Tile* tile = LevelGetTile(level, x, y);
+            Vec2 position = Vec2{ (f32)x, (f32)y };
+            Vec2 size = Vec2{ 1.0f, 1.0f };
+            if (tile->type == TILE_WALL)
+            {
+                RendererDrawFilleRect2D(position, size, COLOR_GRAY);
+            }
+            else if (tile->type == TILE_DOOR)
+            {
+                Door* door = &level->doors[tile->door_index];
+                if (door->state == DoorState_Open)
+                {
+                    RendererDrawFilleRect2D(position, size, COLOR_GREEN);
+                }
+                else
+                {
+                    RendererDrawFilleRect2D(position, size, COLOR_RED);
+                }
+            }
+            else
+            {
+                if (tile->flags & TF_TRIGGER)
+                {
+                    if (tile->state.trigger.active)
+                    {
+                        RendererDrawFilleRect2D(position, size, COLOR_GREEN);
+                    }
+                    else
+                    {
+                        RendererDrawFilleRect2D(position, size, COLOR_ORANGE);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void LevelDraw2D(Level* level, Camera* camera)
+{
+    RendererSetCamera(camera);
+
+    if (camera->type == CAMERA_TYPE_ORTHOGRAPHIC)
+    {
+        DrawWalls2D(level);
+        DrawGrid2D(level, COLOR_DARK_GRAY);
+        DrawEntities(&level->entity_manager);
+    }
+}

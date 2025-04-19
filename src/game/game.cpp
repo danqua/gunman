@@ -3,6 +3,7 @@
 #include "platform/platform.h"
 #include "render/render.h"
 #include "render/image.h"
+#include "level_renderer.h"
 
 void Trigger_OpenDoor(Level* level, Entity* entity)
 {
@@ -34,7 +35,9 @@ void GameInit(Game* game)
     TimeInit(&game->time);
     RendererInit(&game->permanent_arena, 800, 600);
 
-    game->state.camera = CameraCreateOrthographic(0.0f, 800.0f / 64.0f, 600.0f / 64.0f, 0.0f, -1.0f, 1.0f);
+    //game->state.camera = CameraCreateOrthographic(0.0f, 800.0f / 64.0f, 600.0f / 64.0f, 0.0f, -1.0f, 1.0f);
+    game->state.camera = CameraCreatePerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+    game->state.camera.position = Vec3{ 0.0f, 0.0f, 2.0f };
 
     // Game state initialization
     Image wall_image = ImageLoad("maps/test.bmp");
@@ -48,6 +51,7 @@ void GameInit(Game* game)
     game->state.player->collider.radius = 0.3f;
     game->state.player->movement.speed = 32.0f;
     game->state.player->movement.friction = 0.85f;
+    game->state.player_fov = 45.0f;
 
     for (s32 y = 0; y < wall_image.height; ++y)
     {
@@ -227,6 +231,7 @@ void GameUpdate(Game* game, f32 dt)
     TimeUpdate(&game->time, now);
     InputUpdate(&game->input);
 
+    /*
     // Center camera on player
     Camera* camera = &game->state.camera;
     camera->position.x = game->state.player->transform.position.x - camera->projection.orthographic.right * 0.5f;
@@ -249,7 +254,7 @@ void GameUpdate(Game* game, f32 dt)
     {
         camera->position.y = game->state.level.height - camera->projection.orthographic.bottom;
     }
-
+    */
 
     Vec2 origin = game->state.player->transform.position;
     Vec2 direction = EntityGetForward(game->state.player);
@@ -264,70 +269,26 @@ void GameUpdate(Game* game, f32 dt)
             DoorOpen(&game->state.level.doors[tile->door_index]);
         }
     }
+
+    game->state.camera.position.x = game->state.player->transform.position.x;
+    game->state.camera.position.z = game->state.player->transform.position.y;
+    game->state.camera.position.y = 0.5f;
+    game->state.camera.rotation.y = RadToDeg(game->state.player->transform.angle) + 90.0f;
 }
 
 void GameRender(Game* game)
 {
-    RendererSetCamera(&game->state.camera);
     RendererBegin();
 
-    for (u32 y = 0; y < game->state.level.height; ++y)
-    {
-        for (u32 x = 0; x < game->state.level.width; ++x)
-        {
-            Tile* tile = LevelGetTile(&game->state.level, x, y);
-            Vec2 position = Vec2{ (f32)x, (f32)y };
-            Vec2 size = Vec2{ 1.0f, 1.0f };
-            if (tile->type == TILE_WALL)
-            {
-                RendererDrawFilleRect2D(position, size, COLOR_GRAY);
-            }
-            else if (tile->type == TILE_DOOR)
-            {
-                Door* door = &game->state.level.doors[tile->door_index];
-                if (door->state == DoorState_Open)
-                {
-                    RendererDrawFilleRect2D(position, size, COLOR_GREEN);
-                }
-                else
-                {
-                    RendererDrawFilleRect2D(position, size, COLOR_RED);
-                }
-            }
-            else
-            {
-                if (tile->flags & TF_TRIGGER)
-                {
-                    if (tile->state.trigger.active)
-                    {
-                        RendererDrawFilleRect2D(position, size, COLOR_GREEN);
-                    }
-                    else
-                    {
-                        RendererDrawFilleRect2D(position, size, COLOR_ORANGE);
-                    }
-                }
-            }
-        }
-    }
+    //LevelDraw2D(&game->state.level, &game->state.camera);
 
-    // Draw grid
-    for (u32 y = 0; y < game->state.level.height; ++y)
-    {
-        Vec2 line_start = Vec2{ 0.0f, (f32)y };
-        Vec2 line_end = Vec2{ (f32)game->state.level.width, (f32)y };
-        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
-    }
+    RendererSetCamera(&game->state.camera);
 
-    for (u32 x = 0; x < game->state.level.width; ++x)
-    {
-        Vec2 line_start = Vec2{ (f32)x, 0.0f };
-        Vec2 line_end = Vec2{ (f32)x, (f32)game->state.level.height };
-        RendererDrawLine2D(line_start, line_end, COLOR_DARK_GRAY);
-    }
+    DrawLevel(&game->state.level);
 
-    DrawEntities(&game->state.level.entity_manager);
-    
+    /*
+
+    // Draw player ray
     Vec2 origin = game->state.player->transform.position;
     Vec2 direction = EntityGetForward(game->state.player);
     RayCastInfo ray_cast_info = LevelCastRay(&game->state.level, origin, direction);
@@ -337,6 +298,7 @@ void GameRender(Game* game)
         RendererDrawLine2D(origin, ray_cast_info.wall_hit, COLOR_RED);
         RendererDrawCircle2D(ray_cast_info.wall_hit, 0.1f, COLOR_YELLOW);
     }
+    */
 
 
     RendererEnd();

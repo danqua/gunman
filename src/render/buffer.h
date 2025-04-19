@@ -2,6 +2,7 @@
 #include "core/types.h"
 
 struct VertexBuffer;
+struct IndexBuffer;
 
 struct VertexLayout
 {
@@ -26,3 +27,18 @@ void VertexBufferUpdate(VertexBuffer* buffer, const void* data, s32 size, s32 of
 
 // Set the vertex layout.
 void VertexBufferSetLayout(VertexBuffer* buffer, const VertexLayout* layout);
+
+// Creates a new index buffer.
+IndexBuffer* IndexBufferCreate(const u32* data, s32 size);
+
+// Destroyes the index buffer.
+void IndexBufferDestroy(IndexBuffer* buffer);
+
+// Bind the index buffer.
+void IndexBufferBind(IndexBuffer* buffer);
+
+// Unbind the index buffer.
+void IndexBufferUnbind();
+
+// Update the index buffer.
+void IndexBufferUpdate(IndexBuffer* buffer, const u32* data, s32 size, s32 offset = 0);

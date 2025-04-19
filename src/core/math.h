@@ -57,6 +57,12 @@ f32 Vec2Angle(Vec2 a, Vec2 b);
 // Returns true if two Vec2s are equal
 b32 Vec2Equal(Vec2 a, Vec2 b);
 
+// Returns a rotated Vec2
+Vec2 Vec2Rotate(Vec2 a, f32 angle);
+
+// Linear interpolation between two Vec2s
+Vec2 Vec2Lerp(Vec2 a, Vec2 b, f32 t);
+
 // ----------------------------------------------------------------
 // Vec3
 // ----------------------------------------------------------------
@@ -248,8 +254,6 @@ f32 Cos(f32 a);
 
 // Tangent function
 f32 Tan(f32 a);
-
-
 
 // Arc tangent function
 f32 Atan2(f32 y, f32 x);

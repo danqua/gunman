@@ -115,6 +115,25 @@ b32 Vec2Equal(Vec2 a, Vec2 b)
     return result;
 }
 
+Vec2 Vec2Rotate(Vec2 a, f32 angle)
+{
+    f32 cos_angle = Cos(angle);
+    f32 sin_angle = Sin(angle);
+
+    Vec2 result;
+    result.x = a.x * cos_angle - a.y * sin_angle;
+    result.y = a.x * sin_angle + a.y * cos_angle;
+    return result;
+}
+
+Vec2 Vec2Lerp(Vec2 a, Vec2 b, f32 t)
+{
+    Vec2 result;
+    result.x = Lerp(a.x, b.x, t);
+    result.y = Lerp(a.y, b.y, t);
+    return result;
+}
+
 // ----------------------------------------------------------------
 // Vec3
 // ----------------------------------------------------------------
