@@ -9,9 +9,11 @@ enum WallDirection
     WallDirection_West
 };
 
-static void DrawWall(Vec2 position, WallDirection direction, Color color)
+static void DrawWall(Vec2 position, WallDirection direction, Tileset* tileset, u32 tile_id)
 {
     Vec3 v1, v2, v3, v4;
+    Vec2 uv1, uv2, uv3, uv4;
+    GetTileTexCoords(tileset, tile_id, &uv1, &uv2, &uv3, &uv4);
     
     switch (direction)
     {
@@ -20,7 +22,10 @@ static void DrawWall(Vec2 position, WallDirection direction, Color color)
             v2 = Vec3{ position.x + 1.0f, 0.0f, position.y };
             v3 = Vec3{ position.x + 1.0f, 1.0f, position.y };
             v4 = Vec3{ position.x, 1.0f, position.y };
-            RendererDrawQuad(v1, v2, v3, v4, color);
+            Vec3 vertices[] = { v1, v2, v3, v4, };
+            Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+            RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
+            
         } break;
 
         case WallDirection_East: {
@@ -28,7 +33,9 @@ static void DrawWall(Vec2 position, WallDirection direction, Color color)
             v2 = Vec3{ position.x + 1.0f, 0.0f, position.y + 1.0f };
             v3 = Vec3{ position.x + 1.0f, 1.0f, position.y + 1.0f };
             v4 = Vec3{ position.x + 1.0f, 1.0f, position.y };
-            RendererDrawQuad(v1, v2, v3, v4, color);
+            Vec3 vertices[] = { v1, v2, v3, v4, };
+            Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+            RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
         } break;
 
         case WallDirection_South: {
@@ -36,7 +43,9 @@ static void DrawWall(Vec2 position, WallDirection direction, Color color)
             v2 = Vec3{ position.x, 0.0f, position.y + 1.0f };
             v3 = Vec3{ position.x, 1.0f, position.y + 1.0f };
             v4 = Vec3{ position.x + 1.0f, 1.0f, position.y + 1.0f };
-            RendererDrawQuad(v1, v2, v3, v4, color);
+            Vec3 vertices[] = { v1, v2, v3, v4, };
+            Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+            RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
         } break;
 
         case WallDirection_West: {
@@ -44,33 +53,47 @@ static void DrawWall(Vec2 position, WallDirection direction, Color color)
             v2 = Vec3{ position.x, 0.0f, position.y };
             v3 = Vec3{ position.x, 1.0f, position.y };
             v4 = Vec3{ position.x, 1.0f, position.y + 1.0f };
-            RendererDrawQuad(v1, v2, v3, v4, color);
+            Vec3 vertices[] = { v1, v2, v3, v4, };
+            Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+            RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
         } break;
     }
 }
 
-static void DrawFloor(Vec2 position)
+static void DrawFloor(Vec2 position, Tileset* tileset, u32 tile_id)
 {
     Vec3 v1 = Vec3{ position.x, 0.0f, position.y };
     Vec3 v2 = Vec3{ position.x, 0.0f, position.y + 1.0f };
     Vec3 v3 = Vec3{ position.x + 1.0f, 0.0f, position.y + 1.0f };
     Vec3 v4 = Vec3{ position.x + 1.0f, 0.0f, position.y };
-    RendererDrawQuad(v1, v2, v3, v4, COLOR_GREEN);
+
+    Vec2 uv1, uv2, uv3, uv4;
+    GetTileTexCoords(tileset, tile_id, &uv1, &uv2, &uv3, &uv4);
+
+    Vec3 vertices[] = { v1, v2, v3, v4, };
+    Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+    RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
 }
 
-static void DrawCeiling(Vec2 position)
+static void DrawCeiling(Vec2 position, Tileset* tileset, u32 tile_id)
 {
     Vec3 v1 = Vec3{ position.x, 1.0f, position.y };
     Vec3 v2 = Vec3{ position.x + 1.0f, 1.0f, position.y };
     Vec3 v3 = Vec3{ position.x + 1.0f, 1.0f, position.y + 1.0f };
     Vec3 v4 = Vec3{ position.x, 1.0f, position.y + 1.0f };
-    RendererDrawQuad(v1, v2, v3, v4, COLOR_GREEN);
+
+    Vec2 uv1, uv2, uv3, uv4;
+    GetTileTexCoords(tileset, tile_id, &uv1, &uv2, &uv3, &uv4);
+
+    Vec3 vertices[] = { v1, v2, v3, v4, };
+    Vec2 texcoords[] = { uv1, uv2, uv3, uv4, };
+    RendererDrawTexturedQuad(vertices, texcoords, tileset->texture);
 }
 
-static void DrawDoor(Door* door, Vec2 position, DoorAxis axis)
+static void DrawDoor(Door* door, Vec2 position, DoorAxis axis, Tileset* tileset, u32 tile_id)
 {
-    DrawCeiling(position);
-    DrawFloor(position);
+    DrawCeiling(position, tileset, 4);
+    DrawFloor(position, tileset, 0);
 
     switch (axis)
     {
@@ -78,7 +101,7 @@ static void DrawDoor(Door* door, Vec2 position, DoorAxis axis)
             Vec2 pos = position;
             f32 t = door->timer / kDoorTransitionTime;
 
-            DrawWall(position, WallDirection_West, COLOR_RED);
+            DrawWall(position, WallDirection_West, tileset, tile_id);
 
             if (door->state == DoorState_Opening)
             {
@@ -90,19 +113,19 @@ static void DrawDoor(Door* door, Vec2 position, DoorAxis axis)
             }
             else if (door->state == DoorState_Open)
             {
-                DrawWall(position, WallDirection_East, COLOR_DARK_GRAY);
+                DrawWall(position, WallDirection_East, tileset, tile_id);
                 break;
             }
-            DrawWall(pos, WallDirection_North, COLOR_GRAY);
-            DrawWall(pos, WallDirection_South, COLOR_GRAY);
-            DrawWall(pos, WallDirection_West, COLOR_DARK_GRAY);
+            DrawWall(pos, WallDirection_North, tileset, tile_id);
+            DrawWall(pos, WallDirection_South, tileset, tile_id);
+            DrawWall(pos, WallDirection_West, tileset, tile_id);
         } break;
 
         case DoorAxis_Vertical: {
             Vec2 pos = position;
             f32 t = door->timer / kDoorTransitionTime;
 
-            DrawWall(position, WallDirection_South, COLOR_BLUE);
+            DrawWall(position, WallDirection_South, tileset, tile_id);
 
             if (door->state == DoorState_Opening)
             {
@@ -114,18 +137,17 @@ static void DrawDoor(Door* door, Vec2 position, DoorAxis axis)
             }
             else if (door->state == DoorState_Open)
             {
-                DrawWall(position, WallDirection_North, COLOR_DARK_GRAY);
+                DrawWall(position, WallDirection_North, tileset, tile_id);
                 break;
             }
-            DrawWall(pos, WallDirection_East, COLOR_GRAY);
-            DrawWall(pos, WallDirection_West, COLOR_GRAY);
-            DrawWall(pos, WallDirection_South, COLOR_DARK_GRAY);
+            DrawWall(pos, WallDirection_East, tileset, tile_id);
+            DrawWall(pos, WallDirection_West, tileset, tile_id);
+            DrawWall(pos, WallDirection_South, tileset, tile_id);
         } break;
     }
-
 }
 
-void DrawLevel(Level* level)
+void DrawLevel(Level* level, Tileset* tileset)
 {
     for (u32 y = 1; y < level->height - 1; ++y)
     {
@@ -144,8 +166,8 @@ void DrawLevel(Level* level)
 
             if (cc && cc->type == TILE_NONE)
             {
-                DrawFloor(position);
-                DrawCeiling(position);
+                DrawFloor(position, tileset, 0);
+                DrawCeiling(position, tileset, 4);
             }
             else
             {
@@ -157,12 +179,12 @@ void DrawLevel(Level* level)
                 switch (tt->type)
                 {
                     case TILE_WALL: {
-                        DrawWall(position, WallDirection_North, COLOR_BLUE);
+                       DrawWall(position, WallDirection_North, tileset, (tt->flags == 1) ? 8 : 1);
                     } break;
 
                     case TILE_DOOR: {
                         Door* door = &level->doors[tt->door_index];
-                        DrawDoor(door, Vec2Subtract(position, Vec2{ 0.0f, 1.0f }), DoorAxis_Horizontal);
+                        DrawDoor(door, Vec2Subtract(position, Vec2{ 0.0f, 1.0f }), DoorAxis_Horizontal, tileset, 5);
                     } break;
                 }
             }
@@ -172,12 +194,12 @@ void DrawLevel(Level* level)
                 switch (rr->type)
                 {
                     case TILE_WALL: {
-                        DrawWall(position, WallDirection_East, COLOR_RED);
+                        DrawWall(position, WallDirection_East, tileset, (rr->flags == 1) ? 8 : 1);
                     } break;
 
                     case TILE_DOOR: {
                         Door* door = &level->doors[rr->door_index];
-                        DrawDoor(door, Vec2Add(position, Vec2{ 1.0f, 0.0f }), DoorAxis_Vertical);
+                        DrawDoor(door, Vec2Add(position, Vec2{ 1.0f, 0.0f }), DoorAxis_Vertical, tileset, 5);
                     } break;
                 }
 
@@ -185,12 +207,12 @@ void DrawLevel(Level* level)
 
             if (bb && bb->type == TILE_WALL)
             {
-                DrawWall(position, WallDirection_South, COLOR_BLUE);
+                DrawWall(position, WallDirection_South, tileset, (bb->flags == 1) ? 8 : 1);
             }
 
             if (ll && ll->type == TILE_WALL)
             {
-                DrawWall(position, WallDirection_West, COLOR_RED);
+                DrawWall(position, WallDirection_West, tileset, (ll->flags == 1) ? 8 : 1);
             }
         }
     }

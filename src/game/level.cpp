@@ -375,8 +375,9 @@ static void DrawWalls2D(Level* level)
     }
 }
 
-void LevelDraw2D(Level* level, Camera* camera)
+void LevelDraw2D(Level* level, Tileset* tileset, Camera* camera)
 {
+    
     RendererSetCamera(camera);
 
     if (camera->type == CAMERA_TYPE_ORTHOGRAPHIC)

@@ -5,6 +5,7 @@
 
 #include "render/camera.h"
 #include "render/shader.h"
+#include "render/texture.h"
 #include "render/buffer.h"
 
 struct Color
@@ -71,3 +72,6 @@ void RendererDrawQuad(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color);
 
 // Draws a outline quad.
 void RendererDrawQuadLines(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color);
+
+// Draws a textured quad.
+void RendererDrawTexturedQuad(Vec3 vertices[4], Vec2 tex_coords[4], Texture* texture);

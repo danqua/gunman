@@ -1,8 +1,11 @@
 #include "render.h"
+#include "platform/platform.h"
 #include <glad/glad.h>
 
 #define MAX_LINE_VERTICES 1024 * 16
 
+constexpr u32 kMaxRenderGroups = 16;
+constexpr u32 kMaxVerticesPerGroup = 1024 * 16;
 
 static Vec4 ColorToVec4(Color color)
 {
@@ -14,6 +17,22 @@ static Vec4 ColorToVec4(Color color)
     return result;
 }
 
+struct Vertex
+{
+    Vec3 position;
+    Vec3 normal;
+    Vec2 texcoord;
+
+    static VertexLayout layout;
+};
+
+struct RenderGroup
+{
+    Vertex* vertices;
+    u32 vertex_count;
+    Texture* texture;
+};
+
 struct LineVertex
 {
     Vec3 position;
@@ -24,6 +43,9 @@ struct LineVertex
 
 VertexLayout LineVertex::layout = {
     2, { 3, 4 }
+};
+VertexLayout Vertex::layout = {
+    3, { 3, 3, 2 }
 };
 
 enum PrimitiveType
@@ -99,6 +121,12 @@ struct Renderer
     PrimitiveRenderer rect_renderer;
     PrimitiveRenderer quad_renderer;
 
+    Shader* basic_shader;
+    RenderGroup render_groups[kMaxRenderGroups];
+    u32 render_group_count;
+    Vertex* vertices;
+    VertexBuffer* vertex_buffer;
+
     f32 z_order;
     b32 increase_z;
 };
@@ -110,19 +138,75 @@ static void IncreaseZOrder()
     renderer.z_order += 0.0001f;
 }
 
+static RenderGroup* FindRenderGroup(Texture* texture)
+{
+    for (u32 i = 0; i < renderer.render_group_count; ++i)
+    {
+        RenderGroup* renderGroup = &renderer.render_groups[i];
+        if (renderGroup->texture == texture)
+        {
+            return renderGroup;
+        }
+    }
+
+    if (renderer.render_group_count < kMaxRenderGroups)
+    {
+        RenderGroup* renderGroup = &renderer.render_groups[renderer.render_group_count++];
+        renderGroup->texture = texture;
+        return renderGroup;
+    }
+    return NULL;
+}
+
+static void FlushRenderGroup(RenderGroup* render_group)
+{
+    Texture* texture = render_group->texture;
+    TextureBind(texture);
+    VertexBufferBind(renderer.vertex_buffer);
+    VertexBufferSetLayout(renderer.vertex_buffer, &Vertex::layout);
+    VertexBufferUpdate(renderer.vertex_buffer, render_group->vertices, sizeof(Vertex) * render_group->vertex_count);
+
+    glDrawArrays(GL_QUADS, 0, render_group->vertex_count);
+
+    render_group->vertex_count = 0;
+}
+
+static void AddVerticesToRenderGroup(RenderGroup* group, Vertex* vertices, u32 count)
+{
+    if (group->vertex_count + count > kMaxVerticesPerGroup)
+    {
+        FlushRenderGroup(group);
+    }
+
+    PlatformCopyMemory(group->vertices + group->vertex_count, vertices, sizeof(Vertex) * count);
+    group->vertex_count += count;
+}
 
 void RendererInit(Arena* arena, s32 width, s32 height)
 {
     gladLoadGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthFunc(GL_LEQUAL);
+    //glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_DEPTH_TEST);
 
     renderer.line_shader = ShaderLoad("shaders/line.vert", "shaders/line.frag");
+    renderer.basic_shader = ShaderLoad("shaders/basic.vert", "shaders/basic.frag");
     renderer.line_renderer = PrimitiveRendererCreate(PrimitiveType_Lines, arena, MAX_LINE_VERTICES);
     renderer.rect_renderer = PrimitiveRendererCreate(PrimitiveType_Quads, arena, MAX_LINE_VERTICES);
     renderer.quad_renderer = PrimitiveRendererCreate(PrimitiveType_Quads, arena, MAX_LINE_VERTICES);
+
+    renderer.vertex_buffer = VertexBufferCreate(nullptr, sizeof(Vertex) * kMaxVerticesPerGroup);
+    renderer.vertices = (Vertex*)ArenaPushSize(arena, sizeof(Vertex) * kMaxVerticesPerGroup);
+    renderer.render_group_count = 0;
+    renderer.z_order = 0.0f;
+
+    for (u32 i = 0; i < kMaxRenderGroups; ++i)
+    {
+        renderer.render_groups[i].vertex_count = 0;
+        renderer.render_groups[i].vertices = renderer.vertices + (i * kMaxVerticesPerGroup);
+        renderer.render_groups[i].texture = nullptr;
+    }
 }
 
 void RendererShutdown()
@@ -161,6 +245,18 @@ void RendererEnd()
     PrimitiveRendererDraw(&renderer.line_renderer);
     PrimitiveRendererDraw(&renderer.rect_renderer);
     PrimitiveRendererDraw(&renderer.quad_renderer);
+
+    ShaderBind(renderer.basic_shader);
+    ShaderSetMat4(renderer.basic_shader, "u_view", renderer.view_matrix);
+    ShaderSetMat4(renderer.basic_shader, "u_projection", renderer.projection_matrix);
+    for (u32 i = 0; i < renderer.render_group_count; ++i)
+    {
+        RenderGroup* group = &renderer.render_groups[i];
+        if (group->vertex_count > 0)
+        {
+            FlushRenderGroup(group);
+        }
+    }
 
     glDisable(GL_BLEND);
 }
@@ -232,4 +328,25 @@ void RendererDrawQuad(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color)
 
 void RendererDrawQuadLines(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color)
 {
+}
+
+void RendererDrawTexturedQuad(Vec3 vertices[4], Vec2 tex_coords[4], Texture* texture)
+{
+    RenderGroup* group = FindRenderGroup(texture);
+
+    if (!group)
+    {
+        return;
+    }
+
+    Vec3 normal = Vec3Cross(Vec3Subtract(vertices[1], vertices[0]), Vec3Subtract(vertices[2], vertices[0]));
+
+    Vertex vertex[4] = {
+        { vertices[0], normal, tex_coords[0] },
+        { vertices[1], normal, tex_coords[1] },
+        { vertices[2], normal, tex_coords[2] },
+        { vertices[3], normal, tex_coords[3] }
+    };
+
+    AddVerticesToRenderGroup(group, vertex, 4);
 }

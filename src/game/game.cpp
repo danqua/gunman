@@ -35,15 +35,18 @@ void GameInit(Game* game)
     TimeInit(&game->time);
     RendererInit(&game->permanent_arena, 800, 600);
 
-    //game->state.camera = CameraCreateOrthographic(0.0f, 800.0f / 64.0f, 600.0f / 64.0f, 0.0f, -1.0f, 1.0f);
-    game->state.camera = CameraCreatePerspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+    game->state.camera = CameraCreatePerspective(70.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
     game->state.camera.position = Vec3{ 0.0f, 0.0f, 2.0f };
+
+    game->state.camera_2d = CameraCreateOrthographic(0.0f, 1280.0f / 64.0f, 720.0f / 64.0f, 0.0f, -1.0f, 1.0f);
 
     // Game state initialization
     Image wall_image = ImageLoad("maps/test.bmp");
     u32* pixels = (u32*)wall_image.pixels;
 
     LevelInit(&game->state.level, wall_image.width, wall_image.height, &game->permanent_arena);
+
+    game->state.tileset = LoadTileset("textures/tileset.bmp", 32, 32);
 
     game->state.player = SpawnEntity(&game->state.level.entity_manager);
     game->state.player->type = ENTITY_PLAYER;
@@ -59,9 +62,15 @@ void GameInit(Game* game)
         {
             u32 pixel = pixels[y * wall_image.width + x];
 
-            if (pixel == 0xff000000)
+            if (pixel == 0xff000000 || pixel == 0xff008000)
             {
                 LevelSetTile(&game->state.level, x, y, TILE_WALL);
+
+                if (pixel == 0xff008000)
+                {
+                    LevelGetTile(&game->state.level, x, y)->flags = 1;
+                }
+                
             }
             else if (pixel == 0xff00ff00)
             {
@@ -184,23 +193,49 @@ void EntityClipMoveVel(Entity* entity, Level* level)
 
 void GameFixedUpdate(Game* game, f32 dt)
 {
+    InputState* input = &game->input;
+    Camera* camera = &game->state.camera;
+
     Entity* player = game->state.player;
     f32 speed = player->movement.speed;
     Vec2 forward = EntityGetForward(player);
+    Vec2 right = Vec2{ forward.y, -forward.x };
+
     forward = Vec2Multiply(forward, speed * dt);
+    right = Vec2Multiply(right, speed * dt);
 
     Vec2 movement = {};
 
-    if (game->input.key_down[KEY_UP])
+    if (game->input.key_down[KEY_UP] || game->input.key_down[KEY_W])
     {
         player->movement.velocity = Vec2Add(player->movement.velocity, forward);
     }
-    if (game->input.key_down[KEY_DOWN])
+    if (game->input.key_down[KEY_DOWN] || game->input.key_down[KEY_S])
     {
         player->movement.velocity = Vec2Subtract(player->movement.velocity, forward);
     }
+    if (game->input.key_down[KEY_A])
+    {
+        player->movement.velocity = Vec2Add(player->movement.velocity, right);
+    }
+    if (game->input.key_down[KEY_D])
+    {
+        player->movement.velocity = Vec2Subtract(player->movement.velocity, right);
+    }
 
-    //EntityClipMoveVel(player, &game->state.level);
+    Vec2 origin = game->state.player->transform.position;
+    Vec2 direction = EntityGetForward(game->state.player);
+    RayCastInfo ray_cast_info = LevelCastRay(&game->state.level, origin, direction);
+
+    if (ray_cast_info.hit)
+    {
+        Tile* tile = ray_cast_info.tile;
+
+        if (tile->type == TILE_DOOR && ray_cast_info.perp_distance < 1.0f && (game->input.key_pressed[KEY_SPACE] || game->input.key_pressed[KEY_E]))
+        {
+            DoorOpen(&game->state.level.doors[tile->door_index]);
+        }
+    }
 
     if (game->input.key_down[KEY_LEFT])
     {
@@ -210,7 +245,6 @@ void GameFixedUpdate(Game* game, f32 dt)
     {
         player->transform.angle += 2.0f * dt;
     }
-
 
     if (player->transform.angle > 2 * PI)
     {
@@ -231,9 +265,8 @@ void GameUpdate(Game* game, f32 dt)
     TimeUpdate(&game->time, now);
     InputUpdate(&game->input);
 
-    /*
     // Center camera on player
-    Camera* camera = &game->state.camera;
+    Camera* camera = &game->state.camera_2d;
     camera->position.x = game->state.player->transform.position.x - camera->projection.orthographic.right * 0.5f;
     camera->position.y = game->state.player->transform.position.y - camera->projection.orthographic.bottom * 0.5f;
 
@@ -254,52 +287,30 @@ void GameUpdate(Game* game, f32 dt)
     {
         camera->position.y = game->state.level.height - camera->projection.orthographic.bottom;
     }
-    */
 
-    Vec2 origin = game->state.player->transform.position;
-    Vec2 direction = EntityGetForward(game->state.player);
-    RayCastInfo ray_cast_info = LevelCastRay(&game->state.level, origin, direction);
-
-    if (ray_cast_info.hit)
-    {
-        Tile* tile = ray_cast_info.tile;
-
-        if (tile->type == TILE_DOOR && ray_cast_info.perp_distance < 0.5f && game->input.key_pressed[KEY_SPACE])
-        {
-            DoorOpen(&game->state.level.doors[tile->door_index]);
-        }
-    }
 
     game->state.camera.position.x = game->state.player->transform.position.x;
     game->state.camera.position.z = game->state.player->transform.position.y;
     game->state.camera.position.y = 0.5f;
     game->state.camera.rotation.y = RadToDeg(game->state.player->transform.angle) + 90.0f;
+
+
+    f32 mouse_sensitivity = 48.0f;
+    game->state.player->transform.angle += DegToRad(game->input.mouse_dx * mouse_sensitivity * dt);
+    game->state.camera.rotation.x -= game->input.mouse_dy * mouse_sensitivity * dt;
 }
 
 void GameRender(Game* game)
 {
     RendererBegin();
 
-    //LevelDraw2D(&game->state.level, &game->state.camera);
-
     RendererSetCamera(&game->state.camera);
+    DrawLevel(&game->state.level, &game->state.tileset);
 
-    DrawLevel(&game->state.level);
-
-    /*
-
-    // Draw player ray
-    Vec2 origin = game->state.player->transform.position;
-    Vec2 direction = EntityGetForward(game->state.player);
-    RayCastInfo ray_cast_info = LevelCastRay(&game->state.level, origin, direction);
-
-    if (ray_cast_info.hit)
+    if (game->input.key_down[KEY_TAB])
     {
-        RendererDrawLine2D(origin, ray_cast_info.wall_hit, COLOR_RED);
-        RendererDrawCircle2D(ray_cast_info.wall_hit, 0.1f, COLOR_YELLOW);
+        LevelDraw2D(&game->state.level, &game->state.tileset, &game->state.camera_2d);
     }
-    */
-
 
     RendererEnd();
 }
