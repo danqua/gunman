@@ -99,6 +99,41 @@ Vec2 Vec2Clamp(Vec2 a, Vec2 min, Vec2 max)
     return result;
 }
 
+f32 Vec2Angle(Vec2 a, Vec2 b)
+{
+    f32 result = Atan2(b.y, b.x) - Atan2(a.y, a.x);
+    if (result < 0.0f)
+    {
+        result += 2.0f * PI;
+    }
+    return result;
+}
+
+b32 Vec2Equal(Vec2 a, Vec2 b)
+{
+    b32 result = (a.x == b.x) && (a.y == b.y);
+    return result;
+}
+
+Vec2 Vec2Rotate(Vec2 a, f32 angle)
+{
+    f32 cos_angle = Cos(angle);
+    f32 sin_angle = Sin(angle);
+
+    Vec2 result;
+    result.x = a.x * cos_angle - a.y * sin_angle;
+    result.y = a.x * sin_angle + a.y * cos_angle;
+    return result;
+}
+
+Vec2 Vec2Lerp(Vec2 a, Vec2 b, f32 t)
+{
+    Vec2 result;
+    result.x = Lerp(a.x, b.x, t);
+    result.y = Lerp(a.y, b.y, t);
+    return result;
+}
+
 // ----------------------------------------------------------------
 // Vec3
 // ----------------------------------------------------------------
@@ -470,6 +505,14 @@ b32 Box2Overlap(Box2 a, Box2 b)
 {
     b32 result = a.min.x <= b.max.x && a.max.x >= b.min.x &&
                  a.min.y <= b.max.y && a.max.y >= b.min.y;
+    return result;
+}
+
+Vec2 Box2Center(Box2 box)
+{
+    Vec2 result;
+    result.x = (box.min.x + box.max.x) * 0.5f;
+    result.y = (box.min.y + box.max.y) * 0.5f;
     return result;
 }
 

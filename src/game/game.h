@@ -12,8 +12,13 @@
 struct GameState
 {
     Camera camera;
+    Camera camera_2d;
     Entity* player;
+    f32 player_fov;
     Level level;
+    Tileset tileset;
+
+    b32 show_minimap;
 };
 
 struct Game

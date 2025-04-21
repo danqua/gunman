@@ -13,7 +13,6 @@ struct Shader
 };
 
 static Shader shaders[MAX_SHADERS];
-static s32 shader_count = 0;
 
 static char* ReadFile(const char* path) {
     FILE* fs;

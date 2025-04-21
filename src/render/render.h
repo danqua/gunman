@@ -5,7 +5,8 @@
 
 #include "render/camera.h"
 #include "render/shader.h"
-#include "render/vertex_buffer.h"
+#include "render/texture.h"
+#include "render/buffer.h"
 
 struct Color
 {
@@ -39,7 +40,6 @@ struct Color
 #define COLOR_MAROON          Color{150, 50, 90, 255}    // Deep maroon
 #define COLOR_OLIVE           Color{140, 140, 90, 255}   // Olive
 
-
 // Creates a new renderer.
 void RendererInit(Arena* arena, s32 width, s32 height);
 
@@ -66,3 +66,12 @@ void RendererDrawCircle2D(Vec2 position, f32 radius, Color color);
 
 // Draws a filled rectangle
 void RendererDrawFilleRect2D(Vec2 position, Vec2 size, Color color);
+
+// Draws a filled quad.
+void RendererDrawQuad(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color);
+
+// Draws a outline quad.
+void RendererDrawQuadLines(Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, Color color);
+
+// Draws a textured quad.
+void RendererDrawTexturedQuad(Vec3 vertices[4], Vec2 tex_coords[4], Texture* texture);

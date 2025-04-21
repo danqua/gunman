@@ -2,7 +2,6 @@
 #include "platform/platform.h"
 #include <SDL3/SDL.h>
 
-
 Image ImageLoad(const char* filename)
 {
     SDL_Surface* surface = SDL_LoadBMP(filename);

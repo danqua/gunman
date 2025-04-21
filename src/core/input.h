@@ -8,6 +8,7 @@ enum Key
     KEY_A,
     KEY_S,
     KEY_D,
+    KEY_E,
 
     KEY_LEFT,
     KEY_RIGHT,
@@ -16,6 +17,9 @@ enum Key
     
     KEY_SPACE,
     KEY_ESCAPE,
+
+    KEY_TAB,
+
     KEY_COUNT
 };
 
@@ -60,4 +64,4 @@ void InputProcessKeyEvent(Key key, bool is_down);
 void InputProcessMouseButtonEvent(MouseButton button, bool is_down);
 
 // Process mouse move event
-void InputProcessMouseMoveEvent(f32 x, f32 y);
+void InputProcessMouseMoveEvent(f32 x, f32 y, f32 dx, f32 dy);
