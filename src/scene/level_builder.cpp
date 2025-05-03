@@ -205,7 +205,7 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
                         s32 waitHere = 0;
                     }
 
-                    f32 bias = 0.02f;
+                    f32 bias = 0.01f;
                     glm::vec2 direction = glm::normalize(glm::vec2(lightRay.x, lightRay.z));
                     glm::vec2 origin = glm::vec2(light->position.x, light->position.z) + direction * bias;
                     f32 luxelDistance = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.z), glm::vec2(light->position.x, light->position.z));
@@ -223,7 +223,7 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
                     RayCastHit hit = {};
                     if (LevelCastRay(level, origin, direction, &hit))
                     {
-                        if (hit.distance + 0.1f > luxelDistance)
+                        if (hit.distance + 0.02f > luxelDistance)
                         {
                             f32 lConstant = 1.0f;
                             f32 lLinear = 0.35f;
