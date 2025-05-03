@@ -74,3 +74,15 @@ void Image_Blit(Image* dest, Image* src, s32 x, s32 y)
         }
     }
 }
+
+void Image_CopyPixel(Image* image, s32 srcX, s32 srcY, s32 dstX, s32 dstY)
+{
+    if (srcX < 0 || srcX >= image->width || srcY < 0 || srcY >= image->height ||
+        dstX < 0 || dstX >= image->width || dstY < 0 || dstY >= image->height)
+    {
+        return;
+    }
+    u32* pixels = (u32*)image->pixels;
+    u32 color = pixels[srcX + srcY * image->width];
+    pixels[dstX + dstY * image->width] = color;
+}

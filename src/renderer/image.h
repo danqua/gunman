@@ -23,3 +23,6 @@ void Image_FillColor(Image* image, Color color);
 
 // Blits a source image onto a destination image at the specified position.
 void Image_Blit(Image* dest, Image* src, s32 x, s32 y);
+
+// Copies a pixel from one position to another in the same image.
+void Image_CopyPixel(Image* image, s32 srcX, s32 srcY, s32 dstX, s32 dstY);
