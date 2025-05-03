@@ -1,6 +1,5 @@
 #include "memory.h"
-#include <string.h>
-#include <assert.h>
+#include "platform.h"
 
 struct PoolNode
 {
@@ -13,94 +12,94 @@ static u64 AlignForward(u64 ptr, u64 alignment)
     return (ptr + mask) & ~mask;
 }
 
-void ArenaInit(Arena* arena, u64 size, void* user_buffer)
+void Arena_Init(Arena* arena, u64 size, void* user_buffer)
 {
     arena->base = (u8*)user_buffer;
     arena->size = size;
     arena->offset = 0;
-    memset(arena->base, 0, size);
+    Platform_FillMemory(arena->base, 0, size);
 }
 
-void ArenaReset(Arena* arena)
+void Arena_Reset(Arena* arena)
 {
     arena->offset = 0;
 }
 
-void* ArenaPushSize(Arena* arena, u64 size, u64 alignment)
+void* Arena_PushSize(Arena* arena, u64 size, u64 alignment)
 {
-    assert(size > 0 && "Size must be greater than 0.");
-    assert(arena->offset < arena->size && "Arena is full.");
+    Platform_Assert(size > 0, "Size must be greater than 0.");
+    Platform_Assert(arena->offset < arena->size, "Arena is full.");
 
-    u64 new_offset = AlignForward(arena->offset, alignment) + size;
-    if (new_offset > arena->size)
+    u64 newOffset = AlignForward(arena->offset, alignment) + size;
+    if (newOffset > arena->size)
     {
         return nullptr;
     }
 
     void* result = arena->base + arena->offset;
-    arena->offset = new_offset;
+    arena->offset = newOffset;
     return result;
 }
 
-void* ArenaPushData(Arena* arena, void* data, u64 size, u64 alignment)
+void* Arena_PushData(Arena* arena, void* data, u64 size, u64 alignment)
 {
-    void* result = ArenaPushSize(arena, size, alignment);
+    void* result = Arena_PushSize(arena, size, alignment);
 
     if (result)
     {
-        memcpy(result, data, size);
+        Platform_CopyMemory(result, data, size);
     }
 
     return result;
 }
 
-void PoolInit(Pool* pool, u64 chunk_size, u64 chunk_count, void* user_buffer, u64 alignment)
+void Pool_Init(Pool* pool, u64 chunkSize, u64 chunkCount, void* buffer, u64 alignment)
 {
-    pool->chunk_size = chunk_size;
-    pool->chunk_count = chunk_count;
-    pool->chunks_used = 0;
+    pool->chunkSize = chunkSize;
+    pool->chunkCount = chunkCount;
+    pool->chunksUsed = 0;
     pool->alignment = alignment;
-    pool->base = (u8*)user_buffer;
-    pool->free_list = pool->base;
+    pool->base = (u8*)buffer;
+    pool->freeList = pool->base;
 
-    PoolClear(pool);
+    Pool_Clear(pool);
 }
 
-void PoolClear(Pool* pool)
+void Pool_Clear(Pool* pool)
 {
     PoolNode* node = (PoolNode*)pool->base;
 
-    for (u64 i = 0; i < pool->chunk_count; ++i)
+    for (u64 i = 0; i < pool->chunkCount; ++i)
     {
-        PoolNode* next = (PoolNode*)(pool->base + i * pool->chunk_size);
+        PoolNode* next = (PoolNode*)(pool->base + i * pool->chunkSize);
         node->next = next;
         node = next;
     }
 
     node->next = nullptr;
-    pool->free_list = pool->base;
-    pool->chunks_used = 0;
+    pool->freeList = pool->base;
+    pool->chunksUsed = 0;
 }
 
-void* PoolAllocate(Pool* pool)
+void* Pool_Alloc(Pool* pool)
 {
-    if (pool->chunks_used >= pool->chunk_count)
+    if (pool->chunksUsed >= pool->chunkCount)
     {
         return nullptr;
     }
 
     // TODO: Implement alignment
 
-    PoolNode* node = (PoolNode*)pool->free_list;
-    pool->free_list = (u8*)node->next;
-    pool->chunks_used++;
-    return memset(node, 0, pool->chunk_size);
+    PoolNode* node = (PoolNode*)pool->freeList;
+    pool->freeList = (u8*)node->next;
+    pool->chunksUsed++;
+    return Platform_ClearMemory(node, pool->chunkSize);
 }
 
-void PoolFree(Pool* pool, void* ptr)
+void Pool_Free(Pool* pool, void* ptr)
 {
     PoolNode* node = (PoolNode*)ptr;
-    node->next = (PoolNode*)pool->free_list;
-    pool->free_list = (u8*)node;
-    pool->chunks_used--;
+    node->next = (PoolNode*)pool->freeList;
+    pool->freeList = (u8*)node;
+    pool->chunksUsed--;
 }

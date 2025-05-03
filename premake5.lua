@@ -15,7 +15,7 @@ workspace "Gunman"
 project "Gunman"
     kind "ConsoleApp"
     language "C++"
-    cppdialect "C++11"
+    cppdialect "C++20"
     debugdir "data"
     targetdir "build/%{cfg.buildcfg}"
     objdir "build/%{cfg.buildcfg}/obj"
@@ -27,7 +27,9 @@ project "Gunman"
     includedirs {
         "src",
 		"extern/SDL3-3.2.8/include",
-        "extern/glad-3.3/include"
+        "extern/glad-3.3/include",
+        "extern/glm-1.0.1-light",
+        "extern/stb-master"
     }
     
     filter "system:windows"

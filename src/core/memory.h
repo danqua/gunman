@@ -11,35 +11,35 @@ struct Arena
 };
 
 // Initializes an arena with a user-provided buffer.
-void ArenaInit(Arena* arena, u64 size, void* user_buffer);
+void Arena_Init(Arena* arena, u64 size, void* buffer);
 
 // Resets the offset of the arena back to zero.
-void ArenaReset(Arena* arena);
+void Arena_Reset(Arena* arena);
 
 // Allocates a block of memory from the arena.
-void* ArenaPushSize(Arena* arena, u64 size, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
+void* Arena_PushSize(Arena* arena, u64 size, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
 
-// Allocates a block of memory from the arena and copies the data from the source buffer.
-void* ArenaPushData(Arena* arena, void* data, u64 size, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
+// Allocates a block of memory with given type.
+#define ArenaPushType(arena, type) (type*)Arena_PushSize(arena, sizeof(type), MEMORY_DEFAULT_ALIGNMENT)
 
 struct Pool
 {
-    u64 chunk_size;     // Size of each chunk in bytes.
-    u64 chunk_count;    // Number of chunks in the pool.
-    u64 chunks_used;    // Number of chunks currently in use.
-    u64 alignment;      // Alignment of each chunk.
-    u8* base;           // Base address of the pool.
-    u8* free_list;      // Pointer to the first free chunk in the pool.
+    u64 chunkSize;     // Size of each chunk in bytes.
+    u64 chunkCount;    // Number of chunks in the pool.
+    u64 chunksUsed;    // Number of chunks currently in use.
+    u64 alignment;     // Alignment of each chunk.
+    u8* base;          // Base address of the pool.
+    u8* freeList;      // Pointer to the first free chunk in the pool.
 };
 
 // Initializes a pool allocator with a user-provided buffer.
-void PoolInit(Pool* pool, u64 chunk_size, u64 chunk_count, void* user_buffer, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
+void Pool_Init(Pool* pool, u64 chunkSize, u64 chunkCount, void* buffer, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
 
 // Clears the pool allocator.
-void PoolClear(Pool* pool);
+void Pool_Clear(Pool* pool);
 
 // Allocates a chunk of memory from the pool allocator.
-void* PoolAllocate(Pool* pool);
+void* Pool_Alloc(Pool* pool);
 
 // Frees a chunk of memory from the pool allocator.
-void PoolFree(Pool* pool, void* ptr);
+void Pool_Free(Pool* pool, void* ptr);

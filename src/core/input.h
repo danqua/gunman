@@ -1,67 +1,66 @@
 #pragma once
 #include "core/types.h"
+#include <glm/glm.hpp>
 
-enum Key
-{
-    KEY_UNKNOWN = 0,
-    KEY_W,
-    KEY_A,
-    KEY_S,
-    KEY_D,
-    KEY_E,
+enum Key {
+    Key_Unknown = 0,
 
-    KEY_LEFT,
-    KEY_RIGHT,
-    KEY_UP,
-    KEY_DOWN,
-    
-    KEY_SPACE,
-    KEY_ESCAPE,
+    // Letters
+    Key_A, Key_B, Key_C, Key_D, Key_E, Key_F, Key_G,
+    Key_H, Key_I, Key_J, Key_K, Key_L, Key_M, Key_N,
+    Key_O, Key_P, Key_Q, Key_R, Key_S, Key_T, Key_U,
+    Key_V, Key_W, Key_X, Key_Y, Key_Z,
 
-    KEY_TAB,
+    // Numbers
+    Key_0, Key_1, Key_2, Key_3, Key_4,
+    Key_5, Key_6, Key_7, Key_8, Key_9,
 
-    KEY_COUNT
+    // Function keys
+    Key_F1, Key_F2, Key_F3, Key_F4, Key_F5, Key_F6,
+    Key_F7, Key_F8, Key_F9, Key_F10, Key_F11, Key_F12,
+
+    // Arrows
+    Key_Up, Key_Down, Key_Left, Key_Right,
+
+    // Control keys
+    Key_Escape,
+    Key_Enter,
+    Key_Tab,
+    Key_Backspace,
+    Key_Space,
+    Key_LeftShift,
+    Key_RightShift,
+    Key_LeftCtrl,
+    Key_RightCtrl,
+    Key_LeftAlt,
+    Key_RightAlt,
+
+    // Misc
+    Key_Insert,
+    Key_Delete,
+    Key_Home,
+    Key_End,
+    Key_PageUp,
+    Key_PageDown,
+
+    Key_Count
 };
 
-enum MouseButton
-{
-    MOUSE_BUTTON_LEFT = 0,
-    MOUSE_BUTTON_RIGHT,
-    MOUSE_BUTTON_MIDDLE,
-    MOUSE_BUTTON_COUNT
+enum MouseButton {
+    MouseButton_Left = 0,
+    MouseButton_Right,
+    MouseButton_Middle,
+    MouseButton_Count
 };
 
-struct InputState
-{
-    bool key_down[KEY_COUNT];      // Is key currently down.
-    bool key_pressed[KEY_COUNT];   // Was key pressed this frame.
-    bool key_released[KEY_COUNT];  // Was key released this frame.
+void Input_Init();
+void Input_Shutdown();
+void Input_NextFrame();
+void Input_ProcessKeyEvent(Key key, b32 down);
+void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel);
 
-    bool mouse_down[MOUSE_BUTTON_COUNT];        // Is mouse button currently down.
-    bool mouse_pressed[MOUSE_BUTTON_COUNT];     // Was mouse button pressed this frame.
-    bool mouse_released[MOUSE_BUTTON_COUNT];    // Was mouse button released this frame.
+b32 IsKeyDown(Key key);
+b32 IsKeyPressed(Key key);
+b32 IsKeyReleased(Key key);
 
-    f32 mouse_x;    // Mouse x position.
-    f32 mouse_y;    // Mouse y position.
-    f32 mouse_dx;   // Mouse x delta.
-    f32 mouse_dy;   // Mouse y delta;
-};
-
-// Initialize input system
-void InputInit();
-
-// Update input state for the current frame
-void InputUpdate(InputState* state);
-
-// ----------------------------------------------------------------
-// Platform specific functions called by the platform layer
-// ----------------------------------------------------------------
-
-// Process key event
-void InputProcessKeyEvent(Key key, bool is_down);
-
-// Process mouse button event
-void InputProcessMouseButtonEvent(MouseButton button, bool is_down);
-
-// Process mouse move event
-void InputProcessMouseMoveEvent(f32 x, f32 y, f32 dx, f32 dy);
+glm::vec2 GetRelativeMousePosition();
