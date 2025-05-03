@@ -167,6 +167,45 @@ glm::ivec2 Atlas_GetTileMinAt(const Atlas* atlas, s32 tileId)
     return result;
 }
 
+f32 ComputeAttenuation(f32 distance)
+{
+    f32 lConstant = 1.0f;
+    f32 lLinear = 0.35f;
+    f32 lQuadratic = 0.44f;
+    f32 attenuation = 1.0f / (lConstant + lLinear * distance + lQuadratic * (distance * distance));
+    return attenuation;
+}
+
+glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, const Light* light, const Atlas* atlas, s32 surfaceIndex, s32 x, s32 y)
+{
+    glm::vec3 ray = glm::normalize(luxelPosition - light->position);
+    glm::vec2 direction = glm::normalize(glm::vec2(ray.x, ray.z));
+    glm::vec2 origin = glm::vec2(light->position.x, light->position.z) + direction * 0.01f;
+
+    f32 luxelDist = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.z), glm::vec2(light->position.x, light->position.z));
+
+    // Get the current color in the lightmap
+    glm::ivec2 pixelPosition = Atlas_GetTileMinAt(atlas, surfaceIndex);
+    pixelPosition.x += x + atlas->padding;
+    pixelPosition.y += y + atlas->padding;
+    u32 prevPixel = ((u32*)atlas->image.pixels)[pixelPosition.x + pixelPosition.y * atlas->image.width];
+    glm::vec4 color = Color_ConvertToVec4(Color_ConvertToRGBA(prevPixel, PixelFormat_ABGR));
+
+    RayCastHit hit = {};
+    if (LevelCastRay(level, origin, direction, &hit))
+    {
+        if (hit.distance + 0.02f > luxelDist)
+        {
+            f32 attenuation = ComputeAttenuation(luxelDist);
+
+            color += glm::vec4(light->color * light->intensity * attenuation, 1.0f);
+            color = glm::clamp(color, 0.0f, 1.0f);
+        }
+    }
+
+    return color;
+}
+
 void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, s32 surfaceCount, const Light* lights, s32 lightCount)
 {
     Image_FillColor(&atlas->image, Color{ 0, 0, 0, 255 });
@@ -198,39 +237,9 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
                     f32 uOffset = (x + 0.5f) * (1.0f / atlas->tileWidth);
                     f32 vOffset = (y + 0.5f) * (1.0f / atlas->tileHeight);
                     glm::vec3 luxelPosition = surface->vertices[0] + uAxis * uOffset + vAxis * vOffset;
-                    glm::vec3 lightRay = glm::normalize(luxelPosition - light->position);
 
-                    f32 bias = 0.01f;
-                    glm::vec2 direction = glm::normalize(glm::vec2(lightRay.x, lightRay.z));
-                    glm::vec2 origin = glm::vec2(light->position.x, light->position.z) + direction * bias;
-                    f32 luxelDistance = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.z), glm::vec2(light->position.x, light->position.z));
-
-                    // Get the current color in the lightmap
-                    glm::ivec2 tileMin = Atlas_GetTileMinAt(atlas, j);
-                    tileMin.x += x + atlas->padding;
-                    tileMin.y += y + atlas->padding;
-                    u32 currentPixel = ((u32*)atlas->image.pixels)[tileMin.x + tileMin.y * atlas->image.width];
-                    glm::vec4 currentColor = Color_ConvertToVec4(Color_ConvertToRGBA(currentPixel, PixelFormat_ABGR));
-                    glm::vec4 fragColor = currentColor;
-
-
-                    RayCastHit hit = {};
-                    if (LevelCastRay(level, origin, direction, &hit))
-                    {
-                        if (hit.distance + 0.02f > luxelDistance)
-                        {
-                            f32 lConstant = 1.0f;
-                            f32 lLinear = 0.35f;
-                            f32 lQuadratic = 0.44f;
-                            f32 attenuation = 1.0f / (lConstant + lLinear * luxelDistance + lQuadratic * (luxelDistance * luxelDistance));
-
-                            fragColor += glm::vec4(light->color * light->intensity * attenuation, 1.0f);
-                            fragColor = glm::clamp(fragColor, 0.0f, 1.0f);
-                        }
-                    }
-
-                    u32* pixels = (u32*)tImage.pixels;
-                    pixels[y * atlas->tileWidth + x] = Color_ConvertToU32(Color_ConvertToColor(fragColor), PixelFormat_ABGR);
+                    glm::vec4 color = ComputeLuxelLighting(level, luxelPosition, light, atlas, j, x, y);                  
+                    ((u32*)tImage.pixels)[y * atlas->tileWidth + x] = Color_ConvertToU32(Color_ConvertToColor(color), PixelFormat_ABGR);
                 }
             }
 
