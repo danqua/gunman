@@ -9,9 +9,9 @@ static void CreateFloorVertices(Surface* surface, glm::vec2 position)
     surface->vertices[2] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 1.0f);
     surface->vertices[3] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 0.0f);
 
-    glm::vec3 v01 = surface->vertices[1] - surface->vertices[0];
-    glm::vec3 v02 = surface->vertices[2] - surface->vertices[0];
-    surface->normal = glm::normalize(glm::cross(v01, v02));
+    glm::vec3 v1 = surface->vertices[1] - surface->vertices[0];
+    glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
+    surface->normal = glm::normalize(glm::cross(v1, v2));
 
     surface->texcoords[0] = glm::vec2(0.0f, 0.0f);
     surface->texcoords[1] = glm::vec2(0.0f, 1.0f);
@@ -26,9 +26,9 @@ static void CreateCeilingVertices(Surface* surface, glm::vec2 position)
     surface->vertices[2] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 1.0f);
     surface->vertices[3] = glm::vec3(position.x + 0.0f, 1.0f, position.y + 1.0f);
 
-    glm::vec3 v01 = surface->vertices[1] - surface->vertices[0];
-    glm::vec3 v02 = surface->vertices[2] - surface->vertices[0];
-    surface->normal = glm::normalize(glm::cross(v01, v02));
+    glm::vec3 v1 = surface->vertices[1] - surface->vertices[0];
+    glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
+    surface->normal = glm::normalize(glm::cross(v1, v2));
 
     surface->texcoords[0] = glm::vec2(0.0f, 1.0f);
     surface->texcoords[1] = glm::vec2(1.0f, 1.0f);
@@ -200,16 +200,10 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
                     glm::vec3 luxelPosition = surface->vertices[0] + uAxis * uOffset + vAxis * vOffset;
                     glm::vec3 lightRay = glm::normalize(luxelPosition - light->position);
 
-                    if (lightRay.y > 0.8f)
-                    {
-                        s32 waitHere = 0;
-                    }
-
                     f32 bias = 0.01f;
                     glm::vec2 direction = glm::normalize(glm::vec2(lightRay.x, lightRay.z));
                     glm::vec2 origin = glm::vec2(light->position.x, light->position.z) + direction * bias;
                     f32 luxelDistance = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.z), glm::vec2(light->position.x, light->position.z));
-
 
                     // Get the current color in the lightmap
                     glm::ivec2 tileMin = Atlas_GetTileMinAt(atlas, j);
