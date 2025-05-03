@@ -170,10 +170,18 @@ glm::ivec2 Atlas_GetTileMinAt(const Atlas* atlas, s32 tileId)
 f32 ComputeAttenuation(f32 distance)
 {
     f32 lConstant = 1.0f;
-    f32 lLinear = 0.35f;
-    f32 lQuadratic = 0.44f;
+    f32 lLinear = 0.7f;
+    f32 lQuadratic = 1.8f;
     f32 attenuation = 1.0f / (lConstant + lLinear * distance + lQuadratic * (distance * distance));
     return attenuation;
+}
+
+f32 ComputeLightFallOff(const Light* light, f32 distance)
+{
+    f32 lightRadius = light->radius;
+    f32 lightFalloff = 1.0f - (distance / lightRadius);
+    lightFalloff = glm::clamp(lightFalloff, 0.0f, 1.0f);
+    return lightFalloff;
 }
 
 glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, const Light* light, const Atlas* atlas, s32 surfaceIndex, s32 x, s32 y)
@@ -196,7 +204,8 @@ glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, cons
     {
         if (hit.distance + 0.02f > luxelDist)
         {
-            f32 attenuation = ComputeAttenuation(luxelDist);
+            //f32 attenuation = ComputeAttenuation(luxelDist);
+            f32 attenuation = ComputeLightFallOff(light, luxelDist);
 
             color += glm::vec4(light->color * light->intensity * attenuation, 1.0f);
             color = glm::clamp(color, 0.0f, 1.0f);
@@ -206,9 +215,35 @@ glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, cons
     return color;
 }
 
+void DilateTile(Image* image, glm::ivec2 tileMin, s32 tileWidth, s32 tileHeight, s32 padding)
+{
+    for (s32 i = 1; i <= padding; i++)
+    {
+        // Dilate the top and bottom row
+        for (s32 x = 0; x < tileWidth; ++x)
+        {
+            Image_CopyPixel(image, tileMin.x + x, tileMin.y, tileMin.x + x, tileMin.y - i);
+            Image_CopyPixel(image, tileMin.x + x, tileMin.y + tileHeight - 1, tileMin.x + x, tileMin.y + tileHeight - 1 + i);
+        }
+
+        // Dilate the left and right column
+        for (s32 y = 0; y < tileHeight + padding * 2; ++y)
+        {
+            Image_CopyPixel(image, tileMin.x, tileMin.y + y, tileMin.x - i, tileMin.y + y);
+            Image_CopyPixel(image, tileMin.x + tileWidth - 1, tileMin.y + y, tileMin.x + tileWidth - 1 + i, tileMin.y + y);
+        }
+
+        // Dilate the corners
+        Image_CopyPixel(image, tileMin.x, tileMin.y, tileMin.x - i, tileMin.y - i); // top left
+        Image_CopyPixel(image, tileMin.x + tileWidth - 1, tileMin.y, tileMin.x + tileWidth - 1 + i, tileMin.y - i); // top right
+        Image_CopyPixel(image, tileMin.x, tileMin.y + tileHeight - 1, tileMin.x - i, tileMin.y + tileHeight - 1 + i); // bottom left
+        Image_CopyPixel(image, tileMin.x + tileWidth - 1, tileMin.y + tileHeight - 1, tileMin.x + tileWidth - 1 + i, tileMin.y + tileHeight - 1 + i); // bottom right
+    }
+}
+
 void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, s32 surfaceCount, const Light* lights, s32 lightCount)
 {
-    Image_FillColor(&atlas->image, Color{ 0, 0, 0, 255 });
+    Image_FillColor(&atlas->image, Color{ 32, 32, 32, 255 });
 
     Image tImage = {};
     tImage.width = atlas->tileWidth;
@@ -249,6 +284,12 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
     }
 
     Platform_Free(tImage.pixels);
+
+    for (s32 i = 0; i < surfaceCount; ++i)
+    {
+        glm::ivec2 tileMin = Atlas_GetTileMinAt(atlas, i) + glm::ivec2(atlas->padding);
+        DilateTile(&atlas->image, tileMin, atlas->tileWidth, atlas->tileHeight, atlas->padding);
+    }
 }
 
 void ComputeLightmapCoordinates(Surface* surfaces, s32 surfaceCount, const Level* level, const Atlas* atlas)
