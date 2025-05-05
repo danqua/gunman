@@ -10,7 +10,7 @@
 
 Image Image_LoadFromFile(const char* filename)
 {
-    //stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(true);
 
     Image image = {};
     image.pixels = stbi_load(filename, &image.width, &image.height, NULL, STBI_rgb_alpha);

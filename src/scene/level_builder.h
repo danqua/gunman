@@ -10,6 +10,7 @@ struct Surface
     glm::vec2 texcoords[4];
     glm::vec2 lightmap[4];
     glm::vec3 normal;
+    u32 texture;
 };
 
 struct Atlas

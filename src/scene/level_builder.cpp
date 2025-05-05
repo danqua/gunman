@@ -2,6 +2,23 @@
 #include "renderer/color.h"
 #include "core/platform.h"
 
+static void CreateSurfaceTexCoords(Surface* surface)
+{
+    surface->texcoords[0] = glm::vec2(0.0f, 0.0f);
+    surface->texcoords[1] = glm::vec2(1.0f, 0.0f);
+    surface->texcoords[2] = glm::vec2(1.0f, 1.0f);
+    surface->texcoords[3] = glm::vec2(0.0f, 1.0f);
+
+    if (surface->texture & 0x80000000)
+    {
+        surface->texture &= ~0x80000000;
+        surface->texcoords[0] = glm::vec2(1.0f, 0.0f);
+        surface->texcoords[1] = glm::vec2(1.0f, 1.0f);
+        surface->texcoords[2] = glm::vec2(0.0f, 1.0f);
+        surface->texcoords[3] = glm::vec2(0.0f, 0.0f);
+    }
+}
+
 static void CreateFloorVertices(Surface* surface, glm::vec2 position)
 {
     surface->vertices[0] = glm::vec3(position.x + 0.0f, 0.0f, position.y + 0.0f);
@@ -13,10 +30,7 @@ static void CreateFloorVertices(Surface* surface, glm::vec2 position)
     glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
     surface->normal = glm::normalize(glm::cross(v1, v2));
 
-    surface->texcoords[0] = glm::vec2(0.0f, 0.0f);
-    surface->texcoords[1] = glm::vec2(0.0f, 1.0f);
-    surface->texcoords[2] = glm::vec2(1.0f, 1.0f);
-    surface->texcoords[3] = glm::vec2(1.0f, 0.0f);
+    CreateSurfaceTexCoords(surface);
 }
 
 static void CreateCeilingVertices(Surface* surface, glm::vec2 position)
@@ -30,10 +44,7 @@ static void CreateCeilingVertices(Surface* surface, glm::vec2 position)
     glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
     surface->normal = glm::normalize(glm::cross(v1, v2));
 
-    surface->texcoords[0] = glm::vec2(0.0f, 1.0f);
-    surface->texcoords[1] = glm::vec2(1.0f, 1.0f);
-    surface->texcoords[2] = glm::vec2(1.0f, 0.0f);
-    surface->texcoords[3] = glm::vec2(0.0f, 0.0f);
+    CreateSurfaceTexCoords(surface);
 }
 
 static void CreateWallVertices(Surface* surface, WallDirection direction, glm::vec2 position)
@@ -73,67 +84,78 @@ static void CreateWallVertices(Surface* surface, WallDirection direction, glm::v
     glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
     surface->normal = glm::normalize(glm::cross(v1, v2));
 
-    surface->texcoords[0] = glm::vec2(0.0f, 0.0f);
-    surface->texcoords[1] = glm::vec2(1.0f, 0.0f);
-    surface->texcoords[2] = glm::vec2(1.0f, 1.0f);
-    surface->texcoords[3] = glm::vec2(0.0f, 1.0f);
+    CreateSurfaceTexCoords(surface);
 }
 
 Surface* CreateLevelSurfaces(const Level* level, Arena* transientStorage, s32* outSurfaceCount)
 {
-    *outSurfaceCount = LevelGetSurfaceCount(level);
-    Surface *surfaces = (Surface*)Arena_PushSize(transientStorage, sizeof(Surface) * (*outSurfaceCount));
+    *outSurfaceCount = 0;
+    const u64 MAX_SURFACES = level->width * level->height * 4;
+    Surface *surfaces = (Surface*)Arena_PushSize(transientStorage, sizeof(Surface) * MAX_SURFACES);
     s32 surfaceIndex = 0;
 
-    for (s32 y = 0; y < level->height; ++y)
+    for (s32 layer = 0; layer < Layer_Count; ++layer)
     {
-        for (s32 x = 0; x < level->width; ++x)
+        for (s32 y = 0; y < level->height; ++y)
         {
-            Tile* tile = LevelGetTileAt(level, x, y);
-            if (tile && tile->type == TileType_Empty)
+            for (s32 x = 0; x < level->width; ++x)
             {
-                Surface surface = {};
-                CreateFloorVertices(&surface, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
+                u32 data = LevelGetTileAt(level, x, y, (Layer)layer);
+                switch (layer)
+                {
+                    case Layer_Floor: {
+                        if (data == 0) continue;
+                        Surface& surface = surfaces[surfaceIndex++];
+                        surface.texture = data - 1;
+                        CreateFloorVertices(&surface, glm::vec2(x, y));
+                    } break;
 
-                CreateCeilingVertices(&surface, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
-                continue;
-            }
+                    case Layer_Ceiling: {
+                        if (data == 0) continue;
+                        Surface& surface = surfaces[surfaceIndex++];
+                        surface.texture = data - 1;
+                        CreateCeilingVertices(&surface, glm::vec2(x, y));
+                    } break;
 
-            Tile* north = LevelGetTileAt(level, x, y + 1);
-            if (north && north->type == TileType_Empty)
-            {
-                Surface surface = {};
-                CreateWallVertices(&surface, WallDirection_North, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
-            }
+                    case Layer_Wall: {
+                        if (data == 0) continue;
+                        u32 northData = LevelGetTileAt(level, x, y + 1, (Layer)layer);
+                        if (northData == 0)
+                        {
+                            Surface& surface = surfaces[surfaceIndex++];
+                            surface.texture = data - 1;
+                            CreateWallVertices(&surface, WallDirection_North, glm::vec2(x, y));
+                        }
 
-            Tile* south = LevelGetTileAt(level, x, y - 1);
-            if (south && south->type == TileType_Empty)
-            {
-                Surface surface = {};
-                CreateWallVertices(&surface, WallDirection_South, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
-            }
-
-            Tile* east = LevelGetTileAt(level, x + 1, y);
-            if (east && east->type == TileType_Empty)
-            {
-                Surface surface = {};
-                CreateWallVertices(&surface, WallDirection_East, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
-            }
-
-            Tile* west = LevelGetTileAt(level, x - 1, y);
-            if (west && west->type == TileType_Empty)
-            {
-                Surface surface = {};
-                CreateWallVertices(&surface, WallDirection_West, glm::vec2(x, y));
-                surfaces[surfaceIndex++] = surface;
+                        u32 southData = LevelGetTileAt(level, x, y - 1, (Layer)layer);
+                        if (southData == 0)
+                        {
+                            Surface& surface = surfaces[surfaceIndex++];
+                            surface.texture = data - 1;
+                            CreateWallVertices(&surface, WallDirection_South, glm::vec2(x, y));
+                        }
+                        
+                        u32 eastData = LevelGetTileAt(level, x + 1, y, (Layer)layer);
+                        if (eastData == 0)
+                        {
+                            Surface& surface = surfaces[surfaceIndex++];
+                            surface.texture = data - 1;
+                            CreateWallVertices(&surface, WallDirection_East, glm::vec2(x, y));
+                        }
+                        u32 westData = LevelGetTileAt(level, x - 1, y, (Layer)layer);
+                        if (westData == 0)
+                        {
+                            Surface& surface = surfaces[surfaceIndex++];
+                            surface.texture = data - 1;
+                            CreateWallVertices(&surface, WallDirection_West, glm::vec2(x, y));
+                        }                        
+                    } break;
+                }
             }
         }
     }
+
+    *outSurfaceCount = surfaceIndex;
 
     return surfaces;
 }
@@ -170,8 +192,8 @@ glm::ivec2 Atlas_GetTileMinAt(const Atlas* atlas, s32 tileId)
 f32 ComputeAttenuation(f32 distance)
 {
     f32 lConstant = 1.0f;
-    f32 lLinear = 0.7f;
-    f32 lQuadratic = 1.8f;
+    f32 lLinear = 0.6f;
+    f32 lQuadratic = 1.5f;
     f32 attenuation = 1.0f / (lConstant + lLinear * distance + lQuadratic * (distance * distance));
     return attenuation;
 }
@@ -194,8 +216,8 @@ glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, cons
 
     // Get the current color in the lightmap
     glm::ivec2 pixelPosition = Atlas_GetTileMinAt(atlas, surfaceIndex);
-    pixelPosition.x += x + atlas->padding;
-    pixelPosition.y += y + atlas->padding;
+    pixelPosition.x += x;
+    pixelPosition.y += y;
     u32 prevPixel = ((u32*)atlas->image.pixels)[pixelPosition.x + pixelPosition.y * atlas->image.width];
     glm::vec4 color = Color_ConvertToVec4(Color_ConvertToRGBA(prevPixel, PixelFormat_ABGR));
 
@@ -204,8 +226,9 @@ glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, cons
     {
         if (hit.distance + 0.02f > luxelDist)
         {
-            //f32 attenuation = ComputeAttenuation(luxelDist);
-            f32 attenuation = ComputeLightFallOff(light, luxelDist);
+            luxelDist = glm::distance(luxelPosition, light->position);
+            f32 attenuation = ComputeAttenuation(luxelDist);
+            //f32 attenuation = ComputeLightFallOff(light, luxelDist);
 
             color += glm::vec4(light->color * light->intensity * attenuation, 1.0f);
             color = glm::clamp(color, 0.0f, 1.0f);
@@ -243,12 +266,15 @@ void DilateTile(Image* image, glm::ivec2 tileMin, s32 tileWidth, s32 tileHeight,
 
 void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, s32 surfaceCount, const Light* lights, s32 lightCount)
 {
-    Image_FillColor(&atlas->image, Color{ 32, 32, 32, 255 });
+    Image_FillColor(&atlas->image, Color{ 16, 16, 16, 255 });
+
+    s32 tileWidth = atlas->tileWidth + atlas->padding * 2;
+    s32 tileHeight = atlas->tileHeight + atlas->padding * 2;
 
     Image tImage = {};
-    tImage.width = atlas->tileWidth;
-    tImage.height = atlas->tileHeight;
-    tImage.pixels = Platform_Alloc(sizeof(u32) * atlas->tileWidth * atlas->tileHeight);
+    tImage.width = tileWidth;
+    tImage.height = tileHeight;
+    tImage.pixels = Platform_Alloc(sizeof(u32) * tileWidth * tileHeight);
 
     for (s32 i = 0; i < lightCount; ++i)
     {
@@ -260,36 +286,31 @@ void ComputeLightmap(Atlas* atlas, const Level* level, const Surface* surfaces, 
 
             glm::vec3 uAxis = glm::normalize(surface->vertices[1] - surface->vertices[0]);
             glm::vec3 vAxis = glm::normalize(surface->vertices[3] - surface->vertices[0]);
-                        
-            f32 luxelWidth = (f32)atlas->tileWidth / (f32)atlas->image.width;
+
+            f32 luxelWidth = (f32)tileWidth / (f32)atlas->image.width;
 
             Image_FillColor(&tImage, Color{ 0, 0, 0, 255 });
             
-            for (s32 y = 0; y < atlas->tileHeight; ++y)
+            for (s32 y = 0; y < tileHeight; ++y)
             {
-                for (s32 x = 0; x < atlas->tileWidth; ++x)
+                for (s32 x = 0; x < tileWidth; ++x)
                 {
-                    f32 uOffset = (x + 0.5f) * (1.0f / atlas->tileWidth);
-                    f32 vOffset = (y + 0.5f) * (1.0f / atlas->tileHeight);
+                    f32 uOffset = ((f32)x + 0.5f - atlas->padding) / (tileWidth - 2 * atlas->padding);
+                    f32 vOffset = ((f32)y + 0.5f - atlas->padding) / (tileHeight - 2 * atlas->padding);
+
                     glm::vec3 luxelPosition = surface->vertices[0] + uAxis * uOffset + vAxis * vOffset;
 
                     glm::vec4 color = ComputeLuxelLighting(level, luxelPosition, light, atlas, j, x, y);                  
-                    ((u32*)tImage.pixels)[y * atlas->tileWidth + x] = Color_ConvertToU32(Color_ConvertToColor(color), PixelFormat_ABGR);
+                    ((u32*)tImage.pixels)[y * tileWidth + x] = Color_ConvertToU32(Color_ConvertToColor(color), PixelFormat_ABGR);
                 }
             }
 
             glm::ivec2 tileMin = Atlas_GetTileMinAt(atlas, j);
-            Image_Blit(&atlas->image, &tImage, tileMin.x + atlas->padding, tileMin.y + atlas->padding);
+            Image_Blit(&atlas->image, &tImage, tileMin.x, tileMin.y);
         }
     }
 
     Platform_Free(tImage.pixels);
-
-    for (s32 i = 0; i < surfaceCount; ++i)
-    {
-        glm::ivec2 tileMin = Atlas_GetTileMinAt(atlas, i) + glm::ivec2(atlas->padding);
-        DilateTile(&atlas->image, tileMin, atlas->tileWidth, atlas->tileHeight, atlas->padding);
-    }
 }
 
 void ComputeLightmapCoordinates(Surface* surfaces, s32 surfaceCount, const Level* level, const Atlas* atlas)

@@ -4,64 +4,39 @@ void LevelInit(Level* level, s32 width, s32 height, Arena* arena)
 {
     level->width = width;
     level->height = height;
-    level->tiles = (Tile*)Arena_PushSize(arena, sizeof(Tile) * width * height);
+
+    u64 layerSizeInBytes = sizeof(u32) * width * height;
+    level->tiles[Layer_Floor] = (u32*)Arena_PushSize(arena, layerSizeInBytes);
+    level->tiles[Layer_Ceiling] = (u32*)Arena_PushSize(arena, layerSizeInBytes);
+    level->tiles[Layer_Wall] = (u32*)Arena_PushSize(arena, layerSizeInBytes);
 }
 
 
 void LevelClear(Level* level)
 {
-    for (s32 i = 0; i < level->width * level->height; ++i)
+    for (s32 i = 0; i < Layer_Count; ++i)
     {
-        level->tiles[i] = {};
-    }
-}
-
-s32 LevelGetSurfaceCount(const Level* level)
-{
-    s32 surfaceCount = 0;
-
-    for (s32 y = 0; y < level->height; ++y)
-    {
-        for (s32 x = 0; x < level->width; ++x)
+        for (s32 j = 0; j < level->width * level->height; ++j)
         {
-            Tile* current = LevelGetTileAt(level, x, y);
-            if (current && current->type == TileType_Empty)
-            {
-                // Count the floor and ceiling surfaces
-                surfaceCount += 2;
-                continue;
-            }
-
-            s32 xofs[] = { 0,  0, 1, -1 };
-            s32 yofs[] = { 1, -1, 0,  0 };
-            for (s32 i = 0; i < 4; ++i)
-            {
-                Tile* tile = LevelGetTileAt(level, x + xofs[i], y + yofs[i]);
-                if (tile && tile->type == TileType_Empty)
-                {
-                    surfaceCount++;
-                }
-            }
+            level->tiles[i][j] = {};
         }
     }
-
-    return surfaceCount;
 }
 
-Tile* LevelGetTileAt(const Level* level, s32 x, s32 y)
+u32 LevelGetTileAt(const Level* level, s32 x, s32 y, Layer layer)
 {
     if (x >= 0 && y >= 0 && x < level->width && y < level->height)
     {
-        return &level->tiles[y * level->width + x];
+        return level->tiles[layer][y * level->width + x];
     }
-    return nullptr;
+    return -1;
 }
 
-void LevelSetTileAt(Level* level, s32 x, s32 y, TileType type)
+void LevelSetTileAt(Level* level, s32 x, s32 y, u32 data, Layer layer)
 {
     if (x < level->width && y < level->height)
     {
-        level->tiles[y * level->width + x].type = type;
+        level->tiles[layer][y * level->width + x]= data;
     }
 }
 
@@ -112,9 +87,9 @@ b32 LevelCastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayC
             break;
         }
 
-        Tile* tile = LevelGetTileAt(level, levelPostion.x, levelPostion.y);
+        u32 tile = LevelGetTileAt(level, levelPostion.x, levelPostion.y, Layer_Wall);
 
-        if (tile->type == TileType_Wall)
+        if (tile)
         {
             hit = 1;
         }
@@ -127,7 +102,9 @@ b32 LevelCastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayC
         out->distance = side ? sideDistance.y - deltaDistance.y : sideDistance.x - deltaDistance.x;
         out->hit = origin + direction * out->distance;
         out->normal = side ? glm::vec2(-1.0f, 0.0f) : glm::vec2(0.0f, -1.0f);
-        out->tile = LevelGetTileAt(level, levelPostion.x, levelPostion.y);
+        out->tileX = levelPostion.x;
+        out->tileY = levelPostion.y;
+        out->layer = Layer_Wall;
     }
 
     return hit;

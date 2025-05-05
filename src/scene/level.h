@@ -4,12 +4,6 @@
 #include "renderer/rhi.h"
 #include <glm/glm.hpp>
 
-enum TileType
-{
-    TileType_Empty,
-    TileType_Wall,
-};
-
 enum WallDirection
 {
     WallDirection_North,
@@ -18,18 +12,20 @@ enum WallDirection
     WallDirection_West
 };
 
-struct Tile
+enum Layer
 {
-    TileType type;
-    TextureId wallTexture;
-    TextureId floorTexture;
-    TextureId ceilingTexture;
+    Layer_Floor,
+    Layer_Ceiling,
+    Layer_Wall,
+    Layer_Count
 };
 
 struct RayCastHit
 {
-    Tile* tile;
-    float distance;
+    f32 distance;
+    s32 tileX;
+    s32 tileY;
+    Layer layer;
     glm::vec2 hit;
     glm::vec2 normal;
 };
@@ -38,13 +34,11 @@ struct Level
 {
     s32 width;
     s32 height;
-    Tile* tiles;
+    u32* tiles[Layer_Count];
 };
-
 
 void LevelInit(Level* level, s32 width, s32 height, Arena* arena);
 void LevelClear(Level* level);
-s32 LevelGetSurfaceCount(const Level* level);
-Tile* LevelGetTileAt(const Level* level, s32 x, s32 y);
-void LevelSetTileAt(Level* level, s32 x, s32 y, TileType type);
+u32 LevelGetTileAt(const Level* level, s32 x, s32 y, Layer layer);
+void LevelSetTileAt(Level* level, s32 x, s32 y, u32 data, Layer layer);
 b32 LevelCastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance = 128.0f);
