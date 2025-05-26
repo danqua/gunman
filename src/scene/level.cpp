@@ -1,6 +1,6 @@
 #include "level.h"
 
-void LevelInit(Level* level, s32 width, s32 height, Arena* arena)
+void Level_Init(Level* level, s32 width, s32 height, Arena* arena)
 {
     level->width = width;
     level->height = height;
@@ -12,7 +12,7 @@ void LevelInit(Level* level, s32 width, s32 height, Arena* arena)
 }
 
 
-void LevelClear(Level* level)
+void Level_Clear(Level* level)
 {
     for (s32 i = 0; i < Layer_Count; ++i)
     {
@@ -23,7 +23,7 @@ void LevelClear(Level* level)
     }
 }
 
-u32 LevelGetTileAt(const Level* level, s32 x, s32 y, Layer layer)
+u32 Level_GetTileAt(const Level* level, s32 x, s32 y, Layer layer)
 {
     if (x >= 0 && y >= 0 && x < level->width && y < level->height)
     {
@@ -32,7 +32,7 @@ u32 LevelGetTileAt(const Level* level, s32 x, s32 y, Layer layer)
     return -1;
 }
 
-void LevelSetTileAt(Level* level, s32 x, s32 y, u32 data, Layer layer)
+void Level_SetTileAt(Level* level, s32 x, s32 y, u32 data, Layer layer)
 {
     if (x < level->width && y < level->height)
     {
@@ -40,7 +40,7 @@ void LevelSetTileAt(Level* level, s32 x, s32 y, u32 data, Layer layer)
     }
 }
 
-b32 LevelCastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance)
+b32 Level_CastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance)
 {
     glm::ivec2 levelPostion = glm::ivec2(
         (s32)origin.x,
@@ -87,7 +87,7 @@ b32 LevelCastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayC
             break;
         }
 
-        u32 tile = LevelGetTileAt(level, levelPostion.x, levelPostion.y, Layer_Wall);
+        u32 tile = Level_GetTileAt(level, levelPostion.x, levelPostion.y, Layer_Wall);
 
         if (tile)
         {
