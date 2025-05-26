@@ -37,6 +37,12 @@ enum DrawMode
     DrawMode_Lines
 };
 
+enum TextureFilter
+{
+    TextureFilter_Nearest,
+    TextureFilter_Linear
+};
+
 struct BufferElement
 {
     s32 location;
@@ -59,6 +65,10 @@ void RHI_ClearColor();
 void RHI_ClearDepth();
 void RHI_ClearStencil();
 void RHI_SetClearColor(f32 r, f32 g, f32 b, f32 a);
+
+void RHI_SetViewport(u32 x, u32 y, u32 width, u32 height);
+void RHI_SetEnableDepthTest(bool enable);
+void RHI_SetCullFace(bool enable);
 
 // Shader
 ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource);
@@ -86,16 +96,22 @@ void RHI_BindIndexBuffer(IndexBufferId indexBuffer);
 void RHI_UnbindIndexBuffer();
 
 // Texture
-TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height);
+TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height, TextureFilter filter = TextureFilter_Linear);
 void RHI_DestroyTexture(TextureId texture);
 void RHI_BindTexture(TextureId texture, u32 slot = 0);
 void RHI_UnbindTexture(TextureId texture);
+void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag);
 
 // Framebuffer
 FramebufferId RHI_CreateFramebuffer(u32 width, u32 height);
 void RHI_DestroyFramebuffer(FramebufferId framebuffer);
 void RHI_BindFramebuffer(FramebufferId framebuffer);
 void RHI_UnbindFramebuffer();
+TextureId RHI_GetFramebufferTexture(FramebufferId framebuffer);
+TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer);
+s32 RHI_GetFramebufferWidth(FramebufferId framebuffer);
+s32 RHI_GetFramebufferHeight(FramebufferId framebuffer);
+
 
 // Draw
 void RHI_SetDrawMode(DrawMode mode);

@@ -1,7 +1,7 @@
 #include "camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera CameraCreatePerspective(f32 fov, f32 aspect, f32 near, f32 far)
+Camera Camera_CreatePerspective(f32 fov, f32 aspect, f32 near, f32 far)
 {
     Camera result = {};
     result.type = CameraType_Perspective;
@@ -12,7 +12,7 @@ Camera CameraCreatePerspective(f32 fov, f32 aspect, f32 near, f32 far)
     return result;
 }
 
-Camera CameraCreateOrthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
+Camera Camera_CreateOrthographic(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far)
 {
     Camera result = {};
     result.type = CameraType_Orthographic;
@@ -25,15 +25,15 @@ Camera CameraCreateOrthographic(f32 left, f32 right, f32 bottom, f32 top, f32 ne
     return result;
 }
 
-glm::mat4 CameraGetViewMatrix(Camera* camera)
+glm::mat4 Camera_GetViewMatrix(const Camera* camera)
 {
-    glm::vec3 target = camera->position + CameraGetForward(camera);
+    glm::vec3 target = camera->position + Camera_GetForward(camera);
     glm::vec3 worldUp = glm::vec3{ 0.0f, 1.0f, 0.0f };
     glm::mat4 result = glm::lookAt(camera->position, target, worldUp);
     return result;
 }
 
-glm::mat4 CameraGetProjectionMatrix(Camera* camera)
+glm::mat4 Camera_GetProjectionMatrix(const Camera* camera)
 {
     switch (camera->type)
     {
@@ -58,7 +58,7 @@ glm::mat4 CameraGetProjectionMatrix(Camera* camera)
     return glm::mat4(1.0f);
 }
 
-glm::vec3 CameraGetForward(Camera* camera)
+glm::vec3 Camera_GetForward(const Camera* camera)
 {
     f32 pitch = glm::radians(camera->rotation.x);
     f32 yaw = glm::radians(camera->rotation.y - 90.0f);
@@ -70,9 +70,9 @@ glm::vec3 CameraGetForward(Camera* camera)
     return result;
 }
 
-glm::vec3 CameraGetRight(Camera* camera)
+glm::vec3 Camera_GetRight(const Camera* camera)
 {
-    glm::vec3 forward = CameraGetForward(camera);
+    glm::vec3 forward = Camera_GetForward(camera);
     glm::vec3 worldUp = glm::vec3{ 0.0f, 1.0f, 0.0f };
     glm::vec3 right = glm::normalize(glm::cross(forward, worldUp));
     return right;

@@ -26,3 +26,12 @@ void Image_Blit(Image* dest, Image* src, s32 x, s32 y);
 
 // Copies a pixel from one position to another in the same image.
 void Image_CopyPixel(Image* image, s32 srcX, s32 srcY, s32 dstX, s32 dstY);
+
+// Downsamples an image by a factor of 2.
+void Image_Downsample2x(Image* dst, const Image* src);
+
+// Adds two images together and stores the result in a destination image.
+void Image_AddImages(Image* dst, const Image* a, const Image* b);
+
+// Crops a region from the source image and stores it in the destination image.
+void Image_Crop(Image* dst, const Image* src, s32 x, s32 y, s32 width, s32 height);

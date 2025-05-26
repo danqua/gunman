@@ -3,9 +3,9 @@
 #include <glad/glad.h>
 
 #define MAX_SHADERS 32
-#define MAX_VERTEX_BUFFERS 32
-#define MAX_INDEX_BUFFERS 32
-#define MAX_TEXTURES 128
+#define MAX_VERTEX_BUFFERS 64
+#define MAX_INDEX_BUFFERS 64
+#define MAX_TEXTURES 256
 #define MAX_FRAMEBUFFERS 16
 
 struct Shader
@@ -38,10 +38,10 @@ struct IndexBuffer
 struct Framebuffer
 {
     u32 id;
-    u32 width;
-    u32 height;
-    u32 colorAttachment;
-    u32 depthAttachment;
+    s32 width;
+    s32 height;
+    TextureId colorAttachment;
+    TextureId depthAttachment;
 };
 
 static Shader shaders[MAX_SHADERS];
@@ -164,6 +164,16 @@ static GLint AttribTypeToSize(AttribType type)
     }
 }
 
+static GLenum TextureFilterToOpenGL(TextureFilter filter)
+{
+    switch (filter)
+    {
+        case TextureFilter_Nearest: return GL_NEAREST;
+        case TextureFilter_Linear: return GL_LINEAR;
+        default: return GL_LINEAR;
+    }
+}
+
 void RHI_Init()
 {
     gladLoadGL();
@@ -197,6 +207,29 @@ void RHI_ClearStencil()
 void RHI_SetClearColor(f32 r, f32 g, f32 b, f32 a)
 {
     glClearColor(r, g, b, a);
+}
+
+void RHI_SetViewport(u32 x, u32 y, u32 width, u32 height)
+{
+    glViewport(x, y, width, height);
+}
+
+void RHI_SetEnableDepthTest(bool enable)
+{
+    (enable ? glEnable : glDisable)(GL_DEPTH_TEST);
+}
+
+void RHI_SetCullFace(bool enable)
+{
+    if (enable)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+    }
+    else
+    {
+        glDisable(GL_CULL_FACE);
+    }
 }
 
 ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource)
@@ -444,7 +477,7 @@ void RHI_UnbindIndexBuffer()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height)
+TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height, TextureFilter filter)
 {
     for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
     {
@@ -456,8 +489,8 @@ TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height)
             glGenTextures(1, &texture.id);
             glBindTexture(GL_TEXTURE_2D, texture.id);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TextureFilterToOpenGL(filter));
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TextureFilterToOpenGL(filter));
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glGenerateMipmap(GL_TEXTURE_2D);
@@ -500,6 +533,13 @@ void RHI_UnbindTexture(TextureId textureId)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag)
+{
+    glBindTexture(GL_TEXTURE_2D, textures[texture].id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TextureFilterToOpenGL(min));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TextureFilterToOpenGL(mag));
+}
+
 FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
 {
     for (uint32_t i = 1; i < MAX_FRAMEBUFFERS; ++i)
@@ -512,19 +552,47 @@ FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
             glGenFramebuffers(1, &framebuffer.id);
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
 
-            glGenTextures(1, &framebuffer.colorAttachment);
-            glBindTexture(GL_TEXTURE_2D, framebuffer.colorAttachment);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer.colorAttachment, 0);
+            for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
+            {
+                if (!textureUsed[i])
+                {
+                    textureUsed[i] = true;
+                    Texture& texture = textures[i];
+                    texture.width = width;
+                    texture.height = height;
 
-            glGenTextures(1, &framebuffer.depthAttachment);
-            glBindTexture(GL_TEXTURE_2D, framebuffer.depthAttachment);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, framebuffer.depthAttachment, 0);
+                    glGenTextures(1, &texture.id);
+                    glBindTexture(GL_TEXTURE_2D, texture.id);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id, 0);
+
+                    framebuffer.colorAttachment = i;
+                    break;
+                }
+            }
+
+            for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
+            {
+                if (!textureUsed[i])
+                {
+                    textureUsed[i] = true;
+                    Texture& texture = textures[i];
+                    texture.width = width;
+                    texture.height = height;
+
+                    glGenTextures(1, &texture.id);
+                    glBindTexture(GL_TEXTURE_2D, texture.id);
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture.id, 0);
+
+                    framebuffer.depthAttachment = i;
+                    break;
+                }
+            }
 
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             {
@@ -534,6 +602,9 @@ FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
 
             glBindTexture(GL_TEXTURE_2D, 0);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            framebuffer.width = width;
+            framebuffer.height = height;
 
             return i;
         }
@@ -547,8 +618,8 @@ void RHI_DestroyFramebuffer(FramebufferId framebufferId)
         return;
 
     Framebuffer& framebuffer = framebuffers[framebufferId];
-    glDeleteTextures(1, &framebuffer.colorAttachment);
-    glDeleteTextures(1, &framebuffer.depthAttachment);
+    RHI_DestroyTexture(framebuffer.colorAttachment);
+    RHI_DestroyTexture(framebuffer.depthAttachment);
     glDeleteFramebuffers(1, &framebuffer.id);
     framebufferUsed[framebufferId] = false;
 }
@@ -567,6 +638,42 @@ void RHI_UnbindFramebuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, Platform_GetWindowWidth(), Platform_GetWindowHeight());
+}
+
+TextureId RHI_GetFramebufferTexture(FramebufferId framebuffer)
+{
+    if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
+        return 0;
+
+    Framebuffer& fb = framebuffers[framebuffer];
+    return fb.colorAttachment;
+}
+
+TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer)
+{
+    if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
+        return 0;
+
+    Framebuffer& fb = framebuffers[framebuffer];
+    return fb.depthAttachment;
+}
+
+s32 RHI_GetFramebufferWidth(FramebufferId framebuffer)
+{
+    if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
+        return 0;
+
+    Framebuffer& fb = framebuffers[framebuffer];
+    return fb.width;
+}
+
+s32 RHI_GetFramebufferHeight(FramebufferId framebuffer)
+{
+    if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
+        return 0;
+
+    Framebuffer& fb = framebuffers[framebuffer];
+    return fb.height;
 }
 
 void RHI_Draw(u32 vertexCount, u32 offset)

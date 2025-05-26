@@ -20,7 +20,7 @@ void Arena_Init(Arena* arena, u64 size, void* user_buffer)
     Platform_FillMemory(arena->base, 0, size);
 }
 
-void Arena_Reset(Arena* arena)
+void Arena_Clear(Arena* arena)
 {
     arena->offset = 0;
 }

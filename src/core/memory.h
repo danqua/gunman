@@ -14,13 +14,16 @@ struct Arena
 void Arena_Init(Arena* arena, u64 size, void* buffer);
 
 // Resets the offset of the arena back to zero.
-void Arena_Reset(Arena* arena);
+void Arena_Clear(Arena* arena);
 
 // Allocates a block of memory from the arena.
 void* Arena_PushSize(Arena* arena, u64 size, u64 alignment = MEMORY_DEFAULT_ALIGNMENT);
 
 // Allocates a block of memory with given type.
 #define ArenaPushType(arena, type) (type*)Arena_PushSize(arena, sizeof(type), MEMORY_DEFAULT_ALIGNMENT)
+
+// Allocates a block of memory with given type and count.
+#define ArenaPushArray(arena, type, count) (type*)Arena_PushSize(arena, sizeof(type) * (count), MEMORY_DEFAULT_ALIGNMENT)
 
 struct Pool
 {

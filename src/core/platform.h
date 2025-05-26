@@ -1,9 +1,9 @@
 #pragma once
 #include "core/types.h"
 
-#define Kilobyte(x) ((x) * 1024)
-#define Megabyte(x) (Kilobyte(x) * 1024)
-#define Gigabyte(x) (Megabyte(x) * 1024)
+#define Kilobytes(x) ((x) * 1024)
+#define Megabytes(x) (Kilobytes(x) * 1024)
+#define Gigabytes(x) (Megabytes(x) * 1024)
 
 // Assert function for debugging.
 void Platform_Assert(b32 condition, const char* message, ...);
@@ -16,6 +16,8 @@ void Platform_Free(void* memory);
 
 // Clears the memory to zero.
 void* Platform_ClearMemory(void* memory, u64 size);
+
+void* ClearMemory(void* ptr, u64 size);
 
 // Fills the memory with a given value.
 void* Platform_FillMemory(void* memory, s32 value, u64 size);
@@ -46,6 +48,30 @@ void Platform_SwapBuffers();
 
 // Returns the time in seconds.
 f64 Platform_GetTime();
+
+// Returns a formatted string.
+const char* TextFormat(const char* format, ...);
+
+struct FileHandle
+{
+    void* handle;
+    u64 size;
+};
+
+enum FileMode
+{
+    FileMode_Read,
+    FileMode_Write
+};
+
+// Opens a file from disk.
+FileHandle Platform_OpenFile(const char* filename, FileMode mode);
+
+// Closes a file handle.
+void Platform_CloseFile(FileHandle* fileHandle);
+
+// Reads some amount of data.
+void Platform_ReadDataFromFile(FileHandle* fileHandle, void* buffer, u64 size);
 
 // Logging
 void Platform_LogInfo(const char* message, ...);

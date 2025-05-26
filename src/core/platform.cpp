@@ -126,6 +126,11 @@ void* Platform_ClearMemory(void* memory, u64 size)
     return memset(memory, 0, size);
 }
 
+void* ClearMemory(void* ptr, u64 size)
+{
+    return memset(ptr, 0, size);
+}
+
 void* Platform_FillMemory(void* memory, s32 value, u64 size)
 {
     return memset(memory, value, size);
@@ -226,6 +231,49 @@ f64 Platform_GetTime()
     u64 counter = SDL_GetPerformanceCounter();
     return (f64)counter / (f64)SDL_GetPerformanceFrequency();
 }
+
+const char* TextFormat(const char* format, ...)
+{
+    static char buffer[1024];
+    va_list args;
+    va_start(args, format);
+    vsprintf_s(buffer, format, args);
+    va_end(args);
+    return buffer;
+}
+
+FileHandle Platform_OpenFile(const char* filename, FileMode mode)
+{
+    const char* modeIdentifier[] = { "rb", "wb" };
+    FILE* fp = {};
+    fopen_s(&fp, filename, modeIdentifier[mode]);
+    fseek(fp, 0, SEEK_END);
+    u64 size = ftell(fp);
+    rewind(fp);
+ 
+    FileHandle result = {};
+    result.handle = fp;
+    result.size = size;
+
+    return result;
+}
+
+void Platform_CloseFile(FileHandle* fileHandle)
+{
+    fclose((FILE*)fileHandle->handle);
+    *fileHandle = {};
+}
+
+void Platform_ReadDataFromFile(FileHandle* fileHandle, void* buffer, u64 size)
+{
+    if (fileHandle->size < size)
+    {
+        return;
+    }
+
+    fread_s(buffer, fileHandle->size, 1, size, (FILE*)fileHandle->handle);
+}
+
 
 void Platform_LogInfo(const char* message, ...)
 {
