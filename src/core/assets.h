@@ -1,8 +1,6 @@
 #pragma once
 #include "core/audio.h"
-#include "core/memory.h"
 #include "renderer/rhi.h"
-#include "renderer/image.h"
 
 // Loads a shader from file.
 ShaderId Asset_LoadShader(const char* vsFilename, const char* fsFilename);
