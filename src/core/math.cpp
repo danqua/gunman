@@ -1,4 +1,5 @@
 #include "math.h"
+#include <algorithm>
 
 f32 Lerp(f32 a, f32 b, f32 t)
 {
