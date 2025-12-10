@@ -40,7 +40,8 @@ enum DrawMode
 enum TextureFilter
 {
     TextureFilter_Nearest,
-    TextureFilter_Linear
+    TextureFilter_Linear,
+    TextureFilter_Anisotropic
 };
 
 struct BufferElement
@@ -101,6 +102,8 @@ void RHI_DestroyTexture(TextureId texture);
 void RHI_BindTexture(TextureId texture, u32 slot = 0);
 void RHI_UnbindTexture(TextureId texture);
 void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag);
+u32 RHI_GetTextureWidth(TextureId texture);
+u32 RHI_GetTextureHeight(TextureId texture);
 
 // Framebuffer
 FramebufferId RHI_CreateFramebuffer(u32 width, u32 height);

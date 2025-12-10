@@ -7,7 +7,6 @@ struct CameraController
     f32 speed;
     f32 speedMod;
     f32 friction;
-    f32 mouseSensitivity;
     f32 rotationSpeed;
     glm::vec3 velocity;
 };

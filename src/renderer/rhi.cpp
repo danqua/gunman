@@ -170,6 +170,7 @@ static GLenum TextureFilterToOpenGL(TextureFilter filter)
     {
         case TextureFilter_Nearest: return GL_NEAREST;
         case TextureFilter_Linear: return GL_LINEAR;
+        case TextureFilter_Anisotropic: return GL_LINEAR_MIPMAP_NEAREST;
         default: return GL_LINEAR;
     }
 }
@@ -181,8 +182,11 @@ void RHI_Init()
     drawMode = GL_TRIANGLES;
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
 }
 
 void RHI_Shutdown()
@@ -539,6 +543,25 @@ void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter ma
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TextureFilterToOpenGL(min));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TextureFilterToOpenGL(mag));
 }
+
+u32 RHI_GetTextureWidth(TextureId textureId)
+{
+    if (textureId == 0 || textureId >= MAX_TEXTURES)
+        return 0;
+
+    Texture& texture = textures[textureId];
+    return texture.width;
+}
+
+u32 RHI_GetTextureHeight(TextureId textureId)
+{
+    if (textureId == 0 || textureId >= MAX_TEXTURES)
+        return 0;
+
+    Texture& texture = textures[textureId];
+    return texture.height;
+}
+
 
 FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
 {

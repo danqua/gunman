@@ -45,16 +45,16 @@ void LineRenderer_Shutdown()
     state.lineCount = 0;
 }
 
-void LineRenderer_BeginFrame(const Camera* camera)
+void LineRenderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view)
 {
-    state.projectionMatrix = Camera_GetProjectionMatrix(camera);
-    state.viewMatrix = Camera_GetViewMatrix(camera);
+    state.projectionMatrix = projection;
+    state.viewMatrix = view;
     state.lineCount = 0;
 }
 
 void LineRenderer_EndFrame()
 {
-    RHI_SetEnableDepthTest(true);
+    RHI_SetEnableDepthTest(false);
 
     if (state.lineCount > 0)
     {

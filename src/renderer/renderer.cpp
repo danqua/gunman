@@ -1,6 +1,5 @@
 #include "renderer.h"
 #include "line_renderer.h"
-#include "loader.h"
 #include "core/platform.h"
 #include "core/assets.h"
 
@@ -46,6 +45,17 @@ Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32
     mesh.vbo = RHI_CreateVertexBuffer(vertices, vertexCount * sizeof(Vertex), layout);
     mesh.ibo = RHI_CreateIndexBuffer(indices, indexCount);
     mesh.indexCount = indexCount;
+
+    mesh.aabb.min = glm::vec3(FLT_MAX);
+    mesh.aabb.max = glm::vec3(-FLT_MAX);
+
+    for (u32 i = 0; i < vertexCount; ++i)
+    {
+        const Vertex& vertex = vertices[i];
+        mesh.aabb.min = glm::min(mesh.aabb.min, vertex.position);
+        mesh.aabb.max = glm::max(mesh.aabb.max, vertex.position);
+    }
+
     return mesh;
 }
 
@@ -83,15 +93,19 @@ void Renderer_Shutdown()
 
 void Renderer_SetSize(s32 width, s32 height)
 {
-    
+    if (state.framebuffer)
+    {
+        RHI_DestroyFramebuffer(state.framebuffer);
+    }
+    state.framebuffer = RHI_CreateFramebuffer(width, height);
 }
 
-void Renderer_BeginFrame(const Camera* camera)
+void Renderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view)
 {
-    state.projectionMatrix = Camera_GetProjectionMatrix(camera);
-    state.viewMatrix = Camera_GetViewMatrix(camera);
+    state.projectionMatrix = projection;
+    state.viewMatrix = view;
 
-    LineRenderer_BeginFrame(camera);
+    LineRenderer_BeginFrame(projection, view);
 }
 
 void Renderer_EndFrame()
@@ -223,4 +237,37 @@ void Renderer_DrawMesh(const Mesh* mesh, const Material* material, const glm::ma
     command->mesh = mesh;
     command->material = material;
     command->transform = transform;
+}
+
+void Renderer_DrawCircle(const glm::vec3& center, f32 radius, const glm::vec3& normal, u32 segments, const glm::vec4& color)
+{
+    if (radius <= 0.0f || segments < 3) return;
+
+    glm::vec3 n = glm::normalize(normal);
+
+    glm::vec3 helper = std::abs(n.y) < 0.999f ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 xAxis = glm::normalize(glm::cross(n, helper));
+    glm::vec3 yAxis = glm::cross(n, xAxis);
+
+    const float step = 2.0f * glm::pi<float>() / static_cast<float>(segments);
+
+    glm::vec3 prev = center + xAxis * radius;
+
+    for (uint32_t i = 1; i <= segments; ++i)
+    {
+        float angle = step * static_cast<float>(i);
+        glm::vec3 dir = std::cos(angle) * xAxis + std::sin(angle) * yAxis;
+        glm::vec3 curr = center + dir * radius;
+
+        Renderer_DrawLine(prev, curr, color);
+        prev = curr;
+    }
+}
+
+
+void Renderer_DrawSphere(const glm::vec3& center, f32 radius, const glm::vec4& color)
+{
+    Renderer_DrawCircle(center, radius, glm::vec3(0.0f, 1.0f, 0.0f), 32, color);
+    Renderer_DrawCircle(center, radius, glm::vec3(1.0f, 0.0f, 0.0f), 32, color);
+    Renderer_DrawCircle(center, radius, glm::vec3(0.0f, 0.0f, 1.0f), 32, color);
 }

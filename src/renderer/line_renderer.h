@@ -10,7 +10,7 @@ void LineRenderer_Init(Arena* arena);
 void LineRenderer_Shutdown();
 
 // Begins a new frame for the line renderer, setting up necessary state.
-void LineRenderer_BeginFrame(const Camera* camera);
+void LineRenderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view);
 
 // Ends the current frame, rendering all queued lines.
 void LineRenderer_EndFrame();

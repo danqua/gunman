@@ -1,1 +1,3 @@
-- Add flush function to renderer and decrease memroy usage
+- [] Add flush function to renderer and decrease memroy usage
+- [] Refine the color conversion functions
+- [] Add a heap allocator for general memory allocations

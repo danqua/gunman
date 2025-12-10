@@ -1,78 +1,136 @@
-#include "door.h"
-#include "level.h"
+#include "game.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/easing.hpp>
 
-void DoorOpen(Door* door)
+void OnDoorTriggerEnter(GameContext* context, Entity* doorEntity, Entity* otherEntity)
 {
-    if (door->state != DoorState_Closed)
+    if (otherEntity->type == EntityType_Player)
     {
+        OpenDoor(context, doorEntity);
+    }
+}
+
+void OnDoorTriggerExit(GameContext* context, Entity* doorEntity, Entity* otherEntity)
+{
+}
+
+Entity* CreateDoor(GameContext* context, v3 position, DoorAxis axis)
+{
+    Entity* lowerDoorEntity = SpawnEntity(context, EntityType_None, position);
+    lowerDoorEntity->meshRenderer.enabled = true;
+    lowerDoorEntity->meshRenderer.mesh = &meshDoorLower;
+    lowerDoorEntity->meshRenderer.material = &materialDefault;
+
+    lowerDoorEntity->transform.position.x += 0.5f;
+    lowerDoorEntity->transform.position.z += 0.5f;
+
+    Entity* upperDoorEntity = SpawnEntity(context, EntityType_None, position);
+    upperDoorEntity->meshRenderer.enabled = true;
+    upperDoorEntity->meshRenderer.mesh = &meshDoorUpper;
+    upperDoorEntity->meshRenderer.material = &materialDefault;
+
+    upperDoorEntity->transform.position.x += 0.5f;
+    upperDoorEntity->transform.position.z += 0.5f;
+
+    if (axis == DoorAxis_Vertical)
+    {
+        lowerDoorEntity->transform.rotation.y = 90.0f;
+        upperDoorEntity->transform.rotation.y = 90.0f;
+    }
+
+    Entity* doorEntity = SpawnEntity(context, EntityType_Door, position);
+    doorEntity->door.lowerDoorEntity = lowerDoorEntity;
+    doorEntity->door.upperDoorEntity = upperDoorEntity;
+    
+    doorEntity->collider.enabled = true;
+    doorEntity->collider.type = ColliderType_Box;
+    doorEntity->collider.aabb.min = v3(0.0f, 0.0f, 0.0f);
+    doorEntity->collider.aabb.max = v3(1.0f, 1.0f, 1.0f);
+    doorEntity->collider.isTrigger = true;
+    doorEntity->collider.onTriggerEnter = OnDoorTriggerEnter;
+    doorEntity->collider.onTriggerExit = OnDoorTriggerExit;
+
+    return doorEntity;
+}
+
+void UpdateDoor(GameContext* context, Entity* doorEntity, f32 deltaTime)
+{
+    Door* door = &doorEntity->door;
+    Entity* lowerDoorEntity = door->lowerDoorEntity;
+    Entity* upperDoorEntity = door->upperDoorEntity;
+
+    if (lowerDoorEntity == nullptr || upperDoorEntity == nullptr)
+    {
+        // If the door entities are not set, we cannot update the door
         return;
     }
 
-    door->state = DoorState_Opening;
-    door->timer = 0.0f;
-}
+    f32 openingTime = 1.0f;
 
-b32 DoorClose(Door* door, Level* level)
-{
-    if (door->state != DoorState_Open)
-    {
-        return false;
-    }
 
-    // Make sure that no entity is inside the door
-    Entity* entity = LevelGetEntityAt(level, door->tile_x, door->tile_y);
-
-    if (!entity)
-    {
-        door->state = DoorState_Closing;
-        door->timer = 0.0f;
-        return true;
-    }
-
-    return false;
-}
-
-void DoorUpdate(Door* door, Level* level, f32 dt)
-{
     switch (door->state)
     {
-        case DoorState_Closed: {} break;
+        case DoorState_Opening: {
+            door->timer += deltaTime;
+
+            f32 t = glm::quadraticEaseOut(glm::clamp(door->timer / openingTime, 0.0f, 1.0f));
+            
+            lowerDoorEntity->transform.position.y = Lerp(0.0f, -0.32f, t);
+            upperDoorEntity->transform.position.y = Lerp(0.0f, 0.7f, t);
+
+            if (door->timer >= openingTime)
+            {
+                door->timer = 0.0f;
+                door->state = DoorState_Open;
+            }
+        } break;
 
         case DoorState_Open: {
-            door->timer += dt;
-            if (door->timer >= kDoorOpenDuration)
+            door->timer += deltaTime;
+
+            if (doorEntity->collider.currentEntity)
             {
-                if (!DoorClose(door, level))
-                {
-                    door->timer = 0.0f;
-                }
+                door->timer = 0.0f;
+            }
+
+            if (door->timer > 2.5f)
+            {
+                Audio_PlayClip(sfxDoorOpen, 1.0f, false);
+                door->state = DoorState_Closing;
+                door->timer = 0.0f;
             }
         } break;
 
         case DoorState_Closing: {
-            door->timer += dt;
+            door->timer += deltaTime;
 
-            if (door->timer >= kDoorTransitionTime)
+            f32 t = glm::quadraticEaseOut(glm::clamp(door->timer / openingTime, 0.0f, 1.0f));
+
+            lowerDoorEntity->transform.position.y = Lerp(-0.32f, 0.0f, t);
+            upperDoorEntity->transform.position.y = Lerp(0.7f, 0.0f, t);
+
+            if (door->timer >= openingTime)
             {
                 door->state = DoorState_Closed;
                 door->timer = 0.0f;
             }
         } break;
 
-        case DoorState_Opening: {
-            door->timer += dt;
-
-            if (door->timer >= kDoorTransitionTime)
-            {
-                door->state = DoorState_Open;
-                door->timer = 0.0f;
-            }
-        } break;
-
-        default: {
-            // invalid state
-            door->state = DoorState_Closed;
-            door->timer = 0.0f;
+        case DoorState_Closed: {
+            // The door is closed, do nothing
         } break;
     }
+}
+
+
+b32 OpenDoor(GameContext* context, Entity* doorEntity)
+{
+    if (doorEntity->door.state != DoorState_Closed)
+        return false;
+
+    doorEntity->door.state = DoorState_Opening;
+    doorEntity->door.timer = 0.0f;
+    Audio_PlayClip(sfxDoorOpen, 1.0f, false);
+
+    return true;
 }

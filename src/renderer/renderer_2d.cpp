@@ -3,6 +3,8 @@
 #include "camera.h"
 #include "core/platform.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 
 #define MAX_LINE_VERTICES 1024
 
@@ -29,7 +31,7 @@ void Renderer2D_Init(Arena* arena)
     f32 width = (f32)Platform_GetWindowWidth();
     f32 height = (f32)Platform_GetWindowHeight();
 
-    renderer.camera = Camera_CreateOrthographic(0.0f, width, height,0.0f, -1.0f, 1.0f);
+    renderer.camera = Camera_CreateOrthographic(0.0f, width, height, 0.0f, -1.0f, 1.0f);
     renderer.zOrder = 0.0f;
     renderer.vertices = (LineVertex*)Arena_PushSize(arena, sizeof(LineVertex) * MAX_LINE_VERTICES);
     renderer.vertexCount = 0;
@@ -95,13 +97,17 @@ void Renderer2D_Flush()
         return;
     }
 
+    RHI_ClearDepth();
     RHI_SetDrawMode(DrawMode_Lines);
+    RHI_SetEnableDepthTest(false);
     RHI_BindShader(renderer.shader);
     RHI_BindVertexBuffer(renderer.vertexBuffer);
     RHI_UpdateVertexBuffer(renderer.vertexBuffer, renderer.vertices, sizeof(LineVertex) * renderer.vertexCount);
     RHI_SetShaderUniformMat4(renderer.shader, "uProjectionMatrix", Camera_GetProjectionMatrix(&renderer.camera));
-    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", Camera_GetViewMatrix(&renderer.camera));
+    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     RHI_Draw(renderer.vertexCount);
+    RHI_SetEnableDepthTest(true);
+    RHI_SetDrawMode(DrawMode_Triangles);
 }
 
 void Renderer2D_DrawLine(const glm::vec2& start, const glm::vec2& end, Color color)

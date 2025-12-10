@@ -46,3 +46,5 @@ void* Pool_Alloc(Pool* pool);
 
 // Frees a chunk of memory from the pool allocator.
 void Pool_Free(Pool* pool, void* ptr);
+
+typedef Pool pool_allocator;
