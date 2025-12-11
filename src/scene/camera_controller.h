@@ -1,6 +1,7 @@
 #pragma once
 #include "core/types.h"
 #include "renderer/camera.h"
+#include "transform.h"
 
 struct CameraController
 {
@@ -13,4 +14,4 @@ struct CameraController
 
 CameraController CreateDefaultCameraController();
 
-void CameraController_Update(CameraController* controller, Camera* camera, f32 deltaTime);
+void UpdateCameraControls(CameraController* controller, Transform* transform, f32 deltaTime);

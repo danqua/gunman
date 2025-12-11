@@ -80,6 +80,11 @@ b32 IsKeyReleased(Key key)
     return !currentKeys[index] && previousKeys[index];
 }
 
+glm::vec2 GetMousePosition()
+{
+    return mousePosition;
+}
+
 glm::vec2 GetRelativeMousePosition()
 {
     return relativeMousePosition;

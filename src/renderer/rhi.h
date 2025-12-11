@@ -115,7 +115,6 @@ TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer);
 s32 RHI_GetFramebufferWidth(FramebufferId framebuffer);
 s32 RHI_GetFramebufferHeight(FramebufferId framebuffer);
 
-
 // Draw
 void RHI_SetDrawMode(DrawMode mode);
 void RHI_Draw(u32 vertexCount, u32 offset = 0);

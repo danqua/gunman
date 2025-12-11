@@ -88,6 +88,16 @@ void Renderer2D_BeginFrame()
 void Renderer2D_EndFrame()
 {
     Renderer2D_Flush();
+
+    RHI_ClearColor();
+    RHI_SetDrawMode(DrawMode_Lines);
+    RHI_SetEnableDepthTest(false);
+    RHI_BindShader(renderer.shader);
+    RHI_SetShaderUniformMat4(renderer.shader, "uProjectionMatrix", Camera_GetProjectionMatrix(&renderer.camera));
+    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    RHI_Draw(renderer.vertexCount);
+    RHI_SetEnableDepthTest(true);
+    RHI_SetDrawMode(DrawMode_Triangles);
 }
 
 void Renderer2D_Flush()
@@ -97,17 +107,9 @@ void Renderer2D_Flush()
         return;
     }
 
-    RHI_ClearDepth();
-    RHI_SetDrawMode(DrawMode_Lines);
-    RHI_SetEnableDepthTest(false);
-    RHI_BindShader(renderer.shader);
+   
     RHI_BindVertexBuffer(renderer.vertexBuffer);
     RHI_UpdateVertexBuffer(renderer.vertexBuffer, renderer.vertices, sizeof(LineVertex) * renderer.vertexCount);
-    RHI_SetShaderUniformMat4(renderer.shader, "uProjectionMatrix", Camera_GetProjectionMatrix(&renderer.camera));
-    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    RHI_Draw(renderer.vertexCount);
-    RHI_SetEnableDepthTest(true);
-    RHI_SetDrawMode(DrawMode_Triangles);
 }
 
 void Renderer2D_DrawLine(const glm::vec2& start, const glm::vec2& end, Color color)

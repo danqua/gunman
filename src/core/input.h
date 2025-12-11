@@ -63,4 +63,5 @@ b32 IsKeyDown(Key key);
 b32 IsKeyPressed(Key key);
 b32 IsKeyReleased(Key key);
 
+glm::vec2 GetMousePosition();
 glm::vec2 GetRelativeMousePosition();
