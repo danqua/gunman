@@ -14,50 +14,191 @@
 #include "scene/camera_controller.h"
 #include "scene/transform.h"
 
-struct Ray {
-    glm::vec2 origin;
-    glm::vec2 direction;
-};
-
-struct AABB {
-    glm::vec3 min;
-    glm::vec3 max;
-};
-
-b32 AABB_Intersects(const AABB* a, const AABB* b)
-{
-    return (a->min.x <= b->max.x && a->max.x >= b->min.x) &&
-           (a->min.y <= b->max.y && a->max.y >= b->min.y) &&
-           (a->min.z <= b->max.z && a->max.z >= b->min.z);
+glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd) {
+    glm::vec2 lineDir = lineEnd - lineStart;
+    glm::vec2 pointDir = point - lineStart;
+    f32 t = glm::dot(pointDir, lineDir) / glm::dot(lineDir, lineDir);
+    t = glm::clamp(t, 0.0f, 1.0f);
+    return lineStart + t * lineDir;
 }
 
+struct LineSegment {
+    glm::vec2 v1;
+    glm::vec2 v2;
+    s32 frontSector;
+    s32 backSector;
+    u32 flags;
+};
+
+struct Edge {
+    s32 seg;
+    b32 reversed;
+};
+
+struct Sector {
+    s32 firstEdge;
+    s32 edgeCount;
+    f32 floorHeight;
+    f32 ceilingHeight;
+};
+
+glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
+    glm::vec2 result = ProjectPointOnLine(point, v1, v2);
+    return result;
+}
+
+LineSegment segments[] = {
+    { {  1, 1 }, {  4, 1 }, 0, -1, 0 },
+    { {  4, 1 }, {  6, 3 }, 0, -1, 0 },
+    { {  6, 3 }, {  6, 5 }, 0,  1, 0 },
+    { {  6, 5 }, {  1, 5 }, 0, -1, 0 },
+    { {  1, 5 }, {  1, 1 }, 0, -1, 0 },
+    { {  6, 3 }, {  8, 3 }, 1, -1, 0 },
+    { {  8, 3 }, {  8, 5 }, 1,  2, 0 },
+    { {  8, 5 }, {  6, 5 }, 1, -1, 0 },
+    { {  8, 3 }, {  8, 1 }, 2, -1, 0 },
+    { {  8, 1 }, { 11, 1 }, 2, -1, 0 },
+    { { 11, 1 }, { 11, 3 }, 2,  3, 0 },
+    { { 11, 3 }, { 11, 5 }, 2, -1, 0 },
+    { { 11, 5 }, {  8, 5 }, 2, -1, 0 },
+    { { 11, 1 }, { 13, 1 }, 3, -1, 0 },
+    { { 13, 1 }, { 13, 3 }, 3, -1, 0 },
+    { { 13, 3 }, { 11, 3 }, 3, -1, 0 }
+};
+
+Edge edges[] = {
+    {  0, false },
+    {  1, false },
+    {  2, false },
+    {  3, false },
+    {  4, false },
+    {  2, true  },
+    {  5, false },
+    {  6, false },
+    {  7, false },
+    {  8, false },
+    {  9, false },
+    { 10, false },
+    { 11, false },
+    { 12, false },
+    {  6, true  },
+    { 13, false },
+    { 14, false },
+    { 15, false },
+    { 10, true  },
+};
+
+Sector sectors[] = {
+    {  0, 5, 0, 4 },
+    {  5, 4, 0, 4 },
+    {  9, 6, 0, 4 },
+    { 15, 4, 0, 4 }
+};
+
+struct Player {
+    glm::vec2 position;
+    f32 angle;
+    f32 radius;
+    s32 currentSector;
+};
+
+void DrawSector(const Sector* sector, Color color) {
+    for (s32 i = 0; i < sector->edgeCount; ++i) {
+        const Edge* edge = &edges[sector->firstEdge + i];
+        const LineSegment* segment = &segments[edge->seg];
+
+        if (segment->backSector != -1 || edge->reversed) {
+            Renderer2D_DrawLine(segment->v1, segment->v2, COLOR_DARK_GRAY);
+        } else {
+            Renderer2D_DrawLine(segment->v1, segment->v2, color);
+        }
+    }
+}
+
+void UpdatePlayer(Player* player, f32 dt) {
+    f32 movementSpeed = 3.0f;
+    f32 rotationSpeed = 1.0f;
+    glm::vec2 forward = glm::vec2(glm::cos(player->angle), glm::sin(player->angle));
+    if (IsKeyDown(Key_Left)) {
+        player->angle -= glm::pi<float>() * rotationSpeed * dt;
+    }
+    if (IsKeyDown(Key_Right)) {
+        player->angle += glm::pi<float>() * rotationSpeed * dt;
+    }
+    if (IsKeyDown(Key_Up)) {
+        player->position += forward * movementSpeed * dt;
+    }
+    if (IsKeyDown(Key_Down)) {
+        player->position -= forward * movementSpeed * dt;
+    }
+
+    const Sector* sector = &sectors[player->currentSector];
+    for (s32 i = 0; i < sector->edgeCount; ++i) {
+        const Edge* edge = &edges[sector->firstEdge + i];
+        const LineSegment* segment = &segments[edge->seg];
+        glm::vec2 closestPoint = ClosestPointOnSegment(player->position, segment->v1, segment->v2);
+        if (glm::distance(closestPoint, player->position) <= player->radius) {
+            if (segment->backSector != -1) {
+                f32 dot = glm::dot(closestPoint, closestPoint - player->position);
+
+                if (edge->reversed && segment->frontSector != player->currentSector) {
+                    if (dot > 0 && player->currentSector != segment->frontSector) {
+                        player->currentSector = segment->frontSector;
+                        break;
+                    }
+                } else {
+                    if (dot < 0 && player->currentSector != segment->backSector) {
+                        player->currentSector = segment->backSector;
+                        break;
+                    }
+                }
+                continue;
+            }
 
 
+            glm::vec2 edgeDir = segment->v2 - segment->v1;
+            glm::vec2 edgeNormal = glm::normalize(glm::vec2(-edgeDir.y, edgeDir.x));
+            glm::vec2 penetrationVector = edgeNormal * (player->radius - glm::distance(closestPoint, player->position));
+            player->position += penetrationVector;
+        }
+    }
+}
+
+void DrawPlayer(const Player* player) {
+    glm::vec2 dir = glm::vec2(glm::cos(player->angle), glm::sin(player->angle));
+    Renderer2D_DrawLine(player->position, player->position + dir * player->radius, COLOR_YELLOW);
+    Renderer2D_DrawRect(player->position - glm::vec2(player->radius), glm::vec2(player->radius * 2), COLOR_YELLOW);
+}
 
 int main(int argc, char** argv)
 {
     Platform_InitWindow("Gunman", 1920, 1080);
     //Platform_PlayAudioClip(audio, true);
 
-    void* memory = Platform_Alloc(Megabytes(8));
+    void* memory = Platform_Alloc(Megabytes(12));
     Platform_Assert(memory, "Failed to allocate memory.");
 
     Arena permanentStorage = {};
     Arena_Init(&permanentStorage, Megabytes(8), memory);
+
+    Arena transientStorage = {};
+    Arena_Init(&transientStorage, Megabytes(4), (u8*)memory + Megabytes(8));
   
     RHI_Init();
     Renderer_Init(&permanentStorage);
+    Renderer2D_Init(&permanentStorage);
     Renderer_SetSize(1920, 1080);
+
+    Renderer2D_SetSize(1920.0f / 64.0f, 1080.0f / 64.0f);
     
     Audio_Init(&permanentStorage);
 
+    Player player = {};
+    player.position = glm::vec2(3.0f, 3.0f);
+    player.angle = 0.0f;
+    player.radius = 0.25f;
+    player.currentSector = 0;
 
-    Camera camera = Camera_CreatePerspective(70.0f, 16.0f / 9.0f, 0.1f, 100.0f);
-
-    Transform cameraTransform = CreateDefaultTransform();
-    cameraTransform.position = glm::vec3(0.0f, 0.0f, 4.0f);
-    CameraController controls = CreateDefaultCameraController();
-    
     while (!Platform_WindowShouldClose())
     {
         Platform_PollEvents();
@@ -73,14 +214,17 @@ int main(int argc, char** argv)
         f32 deltaTime = (f32)(currentTime - lastTime);
         lastTime = currentTime;
 
-        glm::mat4 projection = Camera_GetProjectionMatrix(&camera);
-        glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
 
-        UpdateCameraControls(&controls, &cameraTransform, deltaTime);
+        Renderer2D_BeginFrame();
 
-        Renderer_BeginFrame(projection, view);
-        Renderer_DrawBox(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(1.0f, 1.0f, 1.0f), Color_ConvertToVec4(COLOR_WHITE));
-        Renderer_EndFrame();
+        for (s32 i = 0; i < 4; ++i) {
+            DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
+        }
+
+        UpdatePlayer(&player, deltaTime);
+        DrawPlayer(&player);
+
+        Renderer2D_EndFrame();
         Platform_SwapBuffers();
         Input_NextFrame();
     }

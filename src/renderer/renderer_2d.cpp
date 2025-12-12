@@ -79,6 +79,10 @@ void Renderer2D_Shutdown()
     renderer.shader = 0;
 }
 
+void Renderer2D_SetSize(f32 width, f32 height) {
+    renderer.camera = Camera_CreateOrthographic(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+}
+
 void Renderer2D_BeginFrame()
 {
     renderer.vertexCount = 0;
