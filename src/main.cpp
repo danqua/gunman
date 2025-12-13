@@ -14,6 +14,52 @@
 #include "scene/camera_controller.h"
 #include "scene/transform.h"
 
+struct AABB {
+    glm::vec2 min;
+    glm::vec2 max;
+};
+
+bool IntersectRayAABB(glm::vec2 rayOrigin, glm::vec2 rayDir, const AABB& aabb, f32* tMinOut, f32* tMaxOut) {
+    f32 tMin = (aabb.min.x - rayOrigin.x) / rayDir.x;
+    f32 tMax = (aabb.max.x - rayOrigin.x) / rayDir.x;
+
+    if (tMin > tMax) {
+        f32 tmp = tMin;
+        tMin = tMax;
+        tMax = tmp;
+    }
+
+    f32 tyMin = (aabb.min.y - rayOrigin.y) / rayDir.y;
+    f32 tyMax = (aabb.max.y - rayOrigin.y) / rayDir.y;
+
+    if (tyMin > tyMax) {
+        f32 tmp = tyMin;
+        tyMin = tyMax;
+        tyMax = tmp;
+    }
+
+    if ((tMin > tyMax) || (tyMin > tMax)) {
+        return false;
+    }
+
+    if (tyMin > tMin) {
+        tMin = tyMin;
+    }
+
+    if (tyMax < tMax) {
+        tMax = tyMax;
+    }
+
+    if (tMax < 0) {
+        return false;
+    }
+
+    *tMinOut = tMin;
+    *tMaxOut = tMax;
+
+    return true;
+}
+
 glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd) {
     glm::vec2 lineDir = lineEnd - lineStart;
     glm::vec2 pointDir = point - lineStart;
@@ -199,6 +245,10 @@ int main(int argc, char** argv)
     player.radius = 0.25f;
     player.currentSector = 0;
 
+    AABB box = {};
+    box.min = glm::vec2(5.0f, 2.0f);
+    box.max = glm::vec2(7.0f, 4.0f);
+
     while (!Platform_WindowShouldClose())
     {
         Platform_PollEvents();
@@ -220,6 +270,19 @@ int main(int argc, char** argv)
         for (s32 i = 0; i < 4; ++i) {
             DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
         }
+
+        Color boxColor = COLOR_WHITE;
+        f32 tMin, tMax;
+        
+        glm::vec2 rayOrigin = player.position;
+        glm::vec2 rayDir = glm::vec2(glm::cos(player.angle), glm::sin(player.angle));
+
+        if (IntersectRayAABB(rayOrigin, rayDir, box, &tMin, &tMax)) {
+            boxColor = COLOR_RED;
+
+            Renderer2D_DrawLine(rayOrigin, rayOrigin + rayDir * tMin, COLOR_GREEN);
+        }
+        Renderer2D_DrawRect(box.min, box.max - box.min, boxColor);
 
         UpdatePlayer(&player, deltaTime);
         DrawPlayer(&player);
