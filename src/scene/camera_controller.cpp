@@ -50,7 +50,7 @@ void UpdateCameraControls(CameraController* controller, Transform* transform, f3
         controller->velocity.y -= speed;
     }
 
-    glm::vec2 mouseDelta = GetRelativeMousePosition();
+    glm::vec2 mouseDelta = GetDeltaMousePosition();
 
     transform->position += controller->velocity * deltaTime;
 

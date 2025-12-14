@@ -3,8 +3,7 @@
 
 #define MEMORY_DEFAULT_ALIGNMENT 8
 
-struct Arena
-{
+struct Arena {
     u8* base;   // Base address of the arena.
     u64 size;   // Size of the arena in bytes.
     u64 offset; // Current offset in the arena.
@@ -25,8 +24,7 @@ void* Arena_PushSize(Arena* arena, u64 size, u64 alignment = MEMORY_DEFAULT_ALIG
 // Allocates a block of memory with given type and count.
 #define ArenaPushArray(arena, type, count) (type*)Arena_PushSize(arena, sizeof(type) * (count), MEMORY_DEFAULT_ALIGNMENT)
 
-struct Pool
-{
+struct Pool {
     u64 chunkSize;     // Size of each chunk in bytes.
     u64 chunkCount;    // Number of chunks in the pool.
     u64 chunksUsed;    // Number of chunks currently in use.

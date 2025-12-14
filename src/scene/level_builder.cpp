@@ -8,71 +8,72 @@
 
 static void CreateSurfaceTexCoords(Surface* surface, const Tileset* tileset, s32 tileId)
 {
-    v2 min, max;
+    glm::vec2 min, max;
     Tileset_GetTileUVs(tileset, tileId, &min, &max);
-    surface->texcoords[0] = v2(min.x, min.y);
-    surface->texcoords[1] = v2(max.x, min.y);
-    surface->texcoords[2] = v2(max.x, max.y);
-    surface->texcoords[3] = v2(min.x, max.y);
+    surface->texcoords[0] = glm::vec2(min.x, min.y);
+    surface->texcoords[1] = glm::vec2(max.x, min.y);
+    surface->texcoords[2] = glm::vec2(max.x, max.y);
+    surface->texcoords[3] = glm::vec2(min.x, max.y);
 }
 
-static void CreateFloorVertices(Surface* surface, v2 position, const Tileset* tileset, s32 tileId = 0)
+static void CreateFloorVertices(Surface* surface, glm::vec2 position, const Tileset* tileset, s32 tileId = 0)
 {
-    surface->vertices[0] = v3(position.x + 0.0f, 0.0f, position.y + 0.0f);
-    surface->vertices[1] = v3(position.x + 1.0f, 0.0f, position.y + 0.0f);
-    surface->vertices[2] = v3(position.x + 1.0f, 0.0f, position.y + 1.0f);
-    surface->vertices[3] = v3(position.x + 0.0f, 0.0f, position.y + 1.0f);
-    surface->normal = v3(0.0f, 0.0f, 1.0f);
+    surface->vertices[0] = glm::vec3(position.x + 0.0f, 0.0f, position.y + 0.0f);
+    surface->vertices[1] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 0.0f);
+    surface->vertices[2] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 1.0f);
+    surface->vertices[3] = glm::vec3(position.x + 0.0f, 0.0f, position.y + 1.0f);
+    surface->normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
     CreateSurfaceTexCoords(surface, tileset, tileId);
 }
 
-static void CreateCeilingVertices(Surface* surface, v2 position, const Tileset* tileset, s32 tileId = 0)
+static void CreateCeilingVertices(Surface* surface, glm::vec2 position, const Tileset* tileset, s32 tileId = 0)
 {
-    surface->vertices[0] = v3(position.x + 0.0f, 1.0f, position.y + 0.0f);
-    surface->vertices[1] = v3(position.x + 0.0f, 1.0f, position.y + 1.0f);
-    surface->vertices[2] = v3(position.x + 1.0f, 1.0f, position.y + 1.0f);
-    surface->vertices[3] = v3(position.x + 1.0f, 1.0f, position.y + 0.0f);
-    surface->normal = v3(0.0f, 0.0f, -1.0f);
+    surface->vertices[0] = glm::vec3(position.x + 0.0f, 1.0f, position.y + 0.0f);
+    surface->vertices[1] = glm::vec3(position.x + 0.0f, 1.0f, position.y + 1.0f);
+    surface->vertices[2] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 1.0f);
+    surface->vertices[3] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 0.0f);
+    surface->normal = glm::vec3(0.0f, 0.0f, -1.0f);
 
     CreateSurfaceTexCoords(surface, tileset, tileId);
 }
 
-static void CreateWallVertices(Surface* surface, WallDirection direction, v2 position, const Tileset* tileset, s32 tileId = 0)
+static void CreateWallVertices(Surface* surface, WallDirection direction, glm::vec2 position, const Tileset* tileset, s32 tileId = 0)
 {
     switch (direction)
     {
-    case WallDirection_North: {
-        surface->vertices[0] = v3(position.x + 1.0f, 0.0f, position.y + 1.0f);
-        surface->vertices[1] = v3(position.x + 0.0f, 0.0f, position.y + 1.0f);
-        surface->vertices[2] = v3(position.x + 0.0f, 1.0f, position.y + 1.0f);
-        surface->vertices[3] = v3(position.x + 1.0f, 1.0f, position.y + 1.0f);
-    } break;
+        case WallDirection_North: {
+            surface->vertices[0] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 1.0f);
+            surface->vertices[1] = glm::vec3(position.x + 0.0f, 0.0f, position.y + 1.0f);
+            surface->vertices[2] = glm::vec3(position.x + 0.0f, 1.0f, position.y + 1.0f);
+            surface->vertices[3] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 1.0f);
+        } break;
 
-    case WallDirection_South: {
-        surface->vertices[0] = v3(position.x + 0.0f, 0.0f, position.y);
-        surface->vertices[1] = v3(position.x + 1.0f, 0.0f, position.y);
-        surface->vertices[2] = v3(position.x + 1.0f, 1.0f, position.y);
-        surface->vertices[3] = v3(position.x + 0.0f, 1.0f, position.y);
-    } break;
+        case WallDirection_South: {
+            surface->vertices[0] = glm::vec3(position.x + 0.0f, 0.0f, position.y);
+            surface->vertices[1] = glm::vec3(position.x + 1.0f, 0.0f, position.y);
+            surface->vertices[2] = glm::vec3(position.x + 1.0f, 1.0f, position.y);
+            surface->vertices[3] = glm::vec3(position.x + 0.0f, 1.0f, position.y);
+        } break;
 
-    case WallDirection_East: {
-        surface->vertices[0] = v3(position.x + 1.0f, 0.0f, position.y + 0.0f);
-        surface->vertices[1] = v3(position.x + 1.0f, 0.0f, position.y + 1.0f);
-        surface->vertices[2] = v3(position.x + 1.0f, 1.0f, position.y + 1.0f);
-        surface->vertices[3] = v3(position.x + 1.0f, 1.0f, position.y + 0.0f);
-    } break;
+        case WallDirection_East: {
+            surface->vertices[0] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 0.0f);
+            surface->vertices[1] = glm::vec3(position.x + 1.0f, 0.0f, position.y + 1.0f);
+            surface->vertices[2] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 1.0f);
+            surface->vertices[3] = glm::vec3(position.x + 1.0f, 1.0f, position.y + 0.0f);
+        } break;
 
-    case WallDirection_West: {
-        surface->vertices[0] = v3(position.x, 0.0f, position.y + 1.0f);
-        surface->vertices[1] = v3(position.x, 0.0f, position.y + 0.0f);
-        surface->vertices[2] = v3(position.x, 1.0f, position.y + 0.0f);
-        surface->vertices[3] = v3(position.x, 1.0f, position.y + 1.0f);
-    } break;
+        case WallDirection_West: {
+            surface->vertices[0] = glm::vec3(position.x, 0.0f, position.y + 1.0f);
+            surface->vertices[1] = glm::vec3(position.x, 0.0f, position.y + 0.0f);
+            surface->vertices[2] = glm::vec3(position.x, 1.0f, position.y + 0.0f);
+            surface->vertices[3] = glm::vec3(position.x, 1.0f, position.y + 1.0f);
+        } break;
+
     };
 
-    v3 v1 = surface->vertices[1] - surface->vertices[0];
-    v3 v2 = surface->vertices[2] - surface->vertices[0];
+    glm::vec3 v1 = surface->vertices[1] - surface->vertices[0];
+    glm::vec3 v2 = surface->vertices[2] - surface->vertices[0];
     surface->normal = glm::normalize(glm::cross(v1, v2));
 
     CreateSurfaceTexCoords(surface, tileset, tileId);
@@ -103,7 +104,7 @@ Surface* CreateLevelSurfaces(const Level* level, const Tileset* tileset, Arena* 
                 {
                     s32 tileId = tile->wall;
                     Surface& surface = surfaces[surfaceIndex++];
-                    CreateWallVertices(&surface, WallDirection_North, v2(x, y), tileset, tileId);
+                    CreateWallVertices(&surface, WallDirection_North, glm::vec2(x, y), tileset, tileId);
                 }
 
                 Tile* southTile = Level_GetTileAt(level, x, y - 1);
@@ -111,7 +112,7 @@ Surface* CreateLevelSurfaces(const Level* level, const Tileset* tileset, Arena* 
                 {
                     s32 tileId = tile->wall;
                     Surface& surface = surfaces[surfaceIndex++];
-                    CreateWallVertices(&surface, WallDirection_South, v2(x, y), tileset, tileId);
+                    CreateWallVertices(&surface, WallDirection_South, glm::vec2(x, y), tileset, tileId);
                 }
 
                 Tile* eastTile = Level_GetTileAt(level, x + 1, y);
@@ -119,7 +120,7 @@ Surface* CreateLevelSurfaces(const Level* level, const Tileset* tileset, Arena* 
                 {
                     s32 tileId = tile->wall;
                     Surface& surface = surfaces[surfaceIndex++];
-                    CreateWallVertices(&surface, WallDirection_East, v2(x, y), tileset, tileId);
+                    CreateWallVertices(&surface, WallDirection_East, glm::vec2(x, y), tileset, tileId);
                 }
 
                 Tile* westTile = Level_GetTileAt(level, x - 1, y);
@@ -127,16 +128,16 @@ Surface* CreateLevelSurfaces(const Level* level, const Tileset* tileset, Arena* 
                 {
                     s32 tileId = tile->wall;
                     Surface& surface = surfaces[surfaceIndex++];
-                    CreateWallVertices(&surface, WallDirection_West, v2(x, y), tileset, tileId);
+                    CreateWallVertices(&surface, WallDirection_West, glm::vec2(x, y), tileset, tileId);
                 }
             }
             else
             {
                 Surface& floorSurface = surfaces[surfaceIndex++];
-                CreateFloorVertices(&floorSurface, v2(x, y), tileset, tile->floor);
+                CreateFloorVertices(&floorSurface, glm::vec2(x, y), tileset, tile->floor);
 
                 Surface& ceilingSurface = surfaces[surfaceIndex++];
-                CreateCeilingVertices(&ceilingSurface, v2(x, y), tileset, tile->ceiling);
+                CreateCeilingVertices(&ceilingSurface, glm::vec2(x, y), tileset, tile->ceiling);
             }
         }
     }
@@ -194,10 +195,10 @@ f32 ComputeLightFallOff(const Light* light, f32 distance)
 glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, const Light* light, const Atlas* atlas, s32 surfaceIndex, s32 x, s32 y)
 {
     glm::vec3 ray = glm::normalize(luxelPosition - light->position);
-    v2 direction = glm::normalize(v2(ray.x, ray.y));
-    v2 origin = v2(light->position.x, light->position.y) + direction * 0.01f;
+    glm::vec2 direction = glm::normalize(glm::vec2(ray.x, ray.y));
+    glm::vec2 origin = glm::vec2(light->position.x, light->position.y) + direction * 0.01f;
 
-    f32 luxelDist = glm::distance(v2(luxelPosition.x, luxelPosition.y), v2(light->position.x, light->position.y));
+    f32 luxelDist = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.y), glm::vec2(light->position.x, light->position.y));
 
     // Get the current color in the lightmap
     glm::ivec2 pixelPosition = Atlas_GetTileMinAt(atlas, surfaceIndex);
@@ -226,10 +227,10 @@ glm::vec4 ComputeLuxelLighting(const Level* level, glm::vec3 luxelPosition, cons
 glm::vec4 ComputeLuxelLighting(const Level* level, const Light* light, const glm::vec3& luxelPosition)
 {
     glm::vec3 ray = glm::normalize(luxelPosition - light->position);
-    v2 direction = glm::normalize(v2(ray.x, ray.y));
-    v2 origin = v2(light->position.x, light->position.y) + direction * 0.01f;
+    glm::vec2 direction = glm::normalize(glm::vec2(ray.x, ray.y));
+    glm::vec2 origin = glm::vec2(light->position.x, light->position.y) + direction * 0.01f;
 
-    f32 luxelDist = glm::distance(v2(luxelPosition.x, luxelPosition.y), v2(light->position.x, light->position.y));
+    f32 luxelDist = glm::distance(glm::vec2(luxelPosition.x, luxelPosition.y), glm::vec2(light->position.x, light->position.y));
 
     glm::vec4 color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -377,9 +378,9 @@ void ComputeLightmapCoordinates(Surface* surfaces, s32 surfaceCount, const Level
         f32 v = ((f32)tileMin.y + atlas->padding) / (f32)atlas->image.height;
         f32 lx = atlas->tileWidth / (f32)atlas->image.width;
 
-        surface->lightmap[0] = v2(u     , v     );
-        surface->lightmap[1] = v2(u + lx, v     );
-        surface->lightmap[2] = v2(u + lx, v + lx);
-        surface->lightmap[3] = v2(u     , v + lx);
+        surface->lightmap[0] = glm::vec2(u     , v     );
+        surface->lightmap[1] = glm::vec2(u + lx, v     );
+        surface->lightmap[2] = glm::vec2(u + lx, v + lx);
+        surface->lightmap[3] = glm::vec2(u     , v + lx);
     }
 }

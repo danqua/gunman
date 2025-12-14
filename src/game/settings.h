@@ -5,5 +5,5 @@ struct GameSettings
 {
     f32 mouseSensitivity;
 
-    b32 debugMode;
+    bool debugMode;
 };

@@ -39,7 +39,7 @@ void DestroyGamecontext(GameContext* context)
     context->maxEntities = 0;
 }
 
-Entity* SpawnEntity(GameContext* context, EntityType type, v3 position)
+Entity* SpawnEntity(GameContext* context, EntityType type, glm::vec3 position)
 {
     if (context->entityCount >= context->maxEntities)
     {
@@ -51,7 +51,7 @@ Entity* SpawnEntity(GameContext* context, EntityType type, v3 position)
     entity->type = type;
     entity->transform.enabled = true;
     entity->transform.position = position;
-    entity->transform.scale = v3(1.0f);
+    entity->transform.scale = glm::vec3(1.0f);
     entity->tileX = (u16)position.x;
     entity->tileY = (u16)position.y;
     context->entities[context->entityCount] = entity;

@@ -2,8 +2,7 @@
 #include "core/platform.h"
 #include "renderer/image.h"
 
-ShaderId Asset_LoadShader(const char* vsFilename, const char* fsFilename)
-{
+ShaderId Asset_LoadShader(const char* vsFilename, const char* fsFilename) {
     char* vsBuffer = nullptr;
     char* fsBuffer = nullptr;
 
@@ -30,40 +29,32 @@ ShaderId Asset_LoadShader(const char* vsFilename, const char* fsFilename)
     return shader;
 }
 
-void Asset_FreeShader(ShaderId shader)
-{
-    if (shader != 0)
-    {
+void Asset_FreeShader(ShaderId shader) {
+    if (shader != 0) {
         RHI_DestroyShader(shader);
     }
 }
 
-TextureId Asset_LoadTexture(const char* filename)
-{
+TextureId Asset_LoadTexture(const char* filename) {
     Image image = Image_LoadFromFile(filename);
     TextureId texture = RHI_CreateTexture(image.pixels, image.width, image.height, TextureFilter_Nearest);
     Image_Free(&image);
     return texture;
 }
 
-void Asset_FreeTexture(TextureId texture)
-{
-    if (texture != 0)
-    {
+void Asset_FreeTexture(TextureId texture) {
+    if (texture != 0) {
         RHI_DestroyTexture(texture);
     }
 }
 
-AudioId Asset_LoadAudio(const char* filename)
-{
+AudioId Asset_LoadAudio(const char* filename) {
     AudioId audio = Audio_LoadFromFile(filename);
     return audio;
 }
 
-void Asset_FreeAudio(AudioId audio)
-{
-    if (audio != 0)
-    {
+void Asset_FreeAudio(AudioId audio) {
+    if (audio != 0) {
         Audio_Free(audio);
     }
 }

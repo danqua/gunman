@@ -1,36 +1,30 @@
 #include "input.h"
 #include "platform.h"
 
-b32 currentKeys[Key_Count];
-b32 previousKeys[Key_Count];
+bool currentKeys[Key_Count];
+bool previousKeys[Key_Count];
 
 glm::vec2 mousePosition;
 glm::vec2 relativeMousePosition;
 
-void Input_Init()
-{
-    for (size_t i = 0; i < Key_Count; ++i)
-    {
+void Input_Init() {
+    for (size_t i = 0; i < Key_Count; ++i) {
         currentKeys[i] = false;
         previousKeys[i] = false;
     }
 }
 
-void Input_Shutdown()
-{
-
+void Input_Shutdown() {
+    // Do nothing
 }
 
-void Input_NextFrame()
-{
+void Input_NextFrame() {
     Platform_CopyMemory(previousKeys, currentKeys, sizeof(currentKeys));
     relativeMousePosition = glm::vec2(0.0f);
 }
 
-void Input_ProcessKeyEvent(Key key, b32 down)
-{
-    if (key >= Key_Count)
-    {
+void Input_ProcessKeyEvent(Key key, bool down) {
+    if (key >= Key_Count) {
         return;
     }
 
@@ -38,8 +32,7 @@ void Input_ProcessKeyEvent(Key key, b32 down)
     currentKeys[index] = down;
 }
 
-void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel)
-{
+void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel) {
     mousePosition.x = x;
     mousePosition.y = y;
 
@@ -47,10 +40,8 @@ void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel)
     relativeMousePosition.y = yrel;
 }
 
-b32 IsKeyDown(Key key)
-{
-    if (key >= Key_Count)
-    {
+bool IsKeyDown(Key key) {
+    if (key >= Key_Count) {
         return false;
     }
 
@@ -58,10 +49,8 @@ b32 IsKeyDown(Key key)
     return currentKeys[index];
 }
 
-b32 IsKeyPressed(Key key)
-{
-    if (key >= Key_Count)
-    {
+bool IsKeyPressed(Key key) {
+    if (key >= Key_Count) {
         return false;
     }
 
@@ -69,10 +58,8 @@ b32 IsKeyPressed(Key key)
     return currentKeys[index] && !previousKeys[index];
 }
 
-b32 IsKeyReleased(Key key)
-{
-    if (key >= Key_Count)
-    {
+bool IsKeyReleased(Key key) {
+    if (key >= Key_Count) {
         return false;
     }
 
@@ -80,12 +67,10 @@ b32 IsKeyReleased(Key key)
     return !currentKeys[index] && previousKeys[index];
 }
 
-glm::vec2 GetMousePosition()
-{
+glm::vec2 GetMousePosition() {
     return mousePosition;
 }
 
-glm::vec2 GetRelativeMousePosition()
-{
+glm::vec2 GetDeltaMousePosition() {
     return relativeMousePosition;
 }

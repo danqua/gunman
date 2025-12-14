@@ -5,8 +5,7 @@
 #include "renderer/rhi.h"
 #include "renderer/camera.h"
 
-struct Vertex
-{
+struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec3 color;
@@ -14,26 +13,23 @@ struct Vertex
     glm::vec2 texCoord1;
 };
 
-struct Mesh
-{
+struct Mesh {
     VertexBufferId vbo;
     IndexBufferId ibo;
     u32 indexCount;
     Box3 aabb;
 };
 
-struct Material
-{
+struct Material {
     ShaderId shader;
     TextureId diffuseTexture;
     TextureId lightmapTexture;
     glm::vec3 diffuseColor;
 
-    b32 useLightmap;
+    bool useLightmap;
 };
 
-struct Light
-{
+struct Light {
     glm::vec3 position;
     glm::vec3 color;
     f32 intensity;
@@ -41,7 +37,6 @@ struct Light
 };
 
 Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32 indexCount);
-
 
 void Renderer_Init(Arena* arena);
 void Renderer_Shutdown();

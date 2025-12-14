@@ -53,15 +53,32 @@ enum MouseButton {
     MouseButton_Count
 };
 
+// Initializes the input system.
 void Input_Init();
+
+// Shuts down the input system.
 void Input_Shutdown();
+
+// Needs to be called at the end of the frame.
 void Input_NextFrame();
-void Input_ProcessKeyEvent(Key key, b32 down);
+
+// Sets the state for the given key.
+void Input_ProcessKeyEvent(Key key, bool down);
+
+// Sets the state for the mouse position.
 void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel);
 
-b32 IsKeyDown(Key key);
-b32 IsKeyPressed(Key key);
-b32 IsKeyReleased(Key key);
+// Returns true when the key is down, false otherwise.
+bool IsKeyDown(Key key);
 
+// Returns true when the key has been pressed in the current frame, false otherwise.
+bool IsKeyPressed(Key key);
+
+// Returns true when the key has been releases in the current frame, false otherwise.
+bool IsKeyReleased(Key key);
+
+// Returns the mouse position in the window.
 glm::vec2 GetMousePosition();
-glm::vec2 GetRelativeMousePosition();
+
+// Returns the delta mouse position between the last and current frame.
+glm::vec2 GetDeltaMousePosition();

@@ -1,11 +1,9 @@
 #include "color.h"
 
-Color Color_ConvertToRGBA(u32 color, PixelFormat format)
-{
+Color Color_ConvertToRGBA(u32 color, PixelFormat format) {
     Color result = {};
 
-    switch (format)
-    {
+    switch (format) {
         case PixelFormat_RGBA: {
             result.r = (color >> 24) & 0xFF;
             result.g = (color >> 16) & 0xFF;
@@ -28,8 +26,7 @@ Color Color_ConvertToRGBA(u32 color, PixelFormat format)
     return result;
 }
 
-glm::vec4 Color_ConvertToVec4(const Color& color)
-{
+glm::vec4 Color_ConvertToVec4(const Color& color) {
     return glm::vec4(
         (f32)color.r / 255.0f,
         (f32)color.g / 255.0f,
@@ -38,12 +35,10 @@ glm::vec4 Color_ConvertToVec4(const Color& color)
     );
 }
 
-u32 Color_ConvertToU32(const Color& color, PixelFormat format)
-{
+u32 Color_ConvertToU32(const Color& color, PixelFormat format) {
     u32 result = 0;
 
-    switch (format)
-    {
+    switch (format) {
         case PixelFormat_RGBA: {
             result |= ((u32)color.r << 24);
             result |= ((u32)color.g << 16);
@@ -66,8 +61,7 @@ u32 Color_ConvertToU32(const Color& color, PixelFormat format)
     return result;
 }
 
-Color Color_ConvertToColor(const glm::vec4& color)
-{
+Color Color_ConvertToColor(const glm::vec4& color) {
     Color result = {};
 
     result.r = (u8)(glm::clamp(color.r * 255.0f, 0.0f, 255.0f));

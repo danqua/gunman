@@ -16,5 +16,5 @@ struct SpriteAnimation
     f32 frameTime;
     u32 frameCount;
     Sprite* sprites[8];
-    b32 loop;
+    bool loop;
 };

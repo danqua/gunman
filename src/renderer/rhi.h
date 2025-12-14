@@ -9,15 +9,13 @@ typedef u32 IndexBufferId;
 typedef u32 TextureId;
 typedef u32 FramebufferId;
 
-enum BufferUsage
-{
+enum BufferUsage {
     BufferUsage_Static,
     BufferUsage_Dynamic,
     BufferUsage_Stream
 };
 
-enum AttribType
-{
+enum AttribType {
     AttribType_Int,
     AttribType_Uint,
     AttribType_Float,
@@ -29,31 +27,27 @@ enum AttribType
     AttribType_Bool
 };
 
-enum DrawMode
-{
+enum DrawMode {
     DrawMode_Triangles,
     DrawMode_TriangleStrip,
     DrawMode_TriangleFan,
     DrawMode_Lines
 };
 
-enum TextureFilter
-{
+enum TextureFilter {
     TextureFilter_Nearest,
     TextureFilter_Linear,
     TextureFilter_Anisotropic
 };
 
-struct BufferElement
-{
+struct BufferElement {
     s32 location;
     AttribType type;
 };
 
 #define MAX_BUFFER_ELEMENTS 8
 
-struct BufferLayout
-{
+struct BufferLayout {
     u32 count;
     u32 stride;
     BufferElement elements[MAX_BUFFER_ELEMENTS];

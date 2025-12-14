@@ -9,7 +9,7 @@
 
 static SDL_Window* window;
 static SDL_GLContext glContext;
-static b32 windowShouldClose;
+static bool windowShouldClose;
 
 static Key ConvertScancodeToKey(SDL_Scancode code) {
     switch (code) {
@@ -99,7 +99,7 @@ static Key ConvertScancodeToKey(SDL_Scancode code) {
 }
 
 
-void Platform_Assert(b32 condition, const char* message, ...)
+void Platform_Assert(bool condition, const char* message, ...)
 {
     if (!condition)
     {
@@ -141,7 +141,7 @@ void* Platform_CopyMemory(void* dest, const void* src, u64 size)
     return memcpy(dest, src, size);
 }
 
-b32 Platform_InitWindow(const char* title, s32 width, s32 height)
+bool Platform_InitWindow(const char* title, s32 width, s32 height)
 {
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -150,7 +150,7 @@ b32 Platform_InitWindow(const char* title, s32 width, s32 height)
     
     SDL_GL_SetSwapInterval(1);
 
-    SDL_SetWindowRelativeMouseMode(window, true);
+    //SDL_SetWindowRelativeMouseMode(window, true);
 
     return true;
 }
@@ -177,7 +177,7 @@ s32 Platform_GetWindowHeight()
     return height;
 }
 
-b32 Platform_WindowShouldClose()
+bool Platform_WindowShouldClose()
 {
     return windowShouldClose;
 }

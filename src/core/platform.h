@@ -6,7 +6,7 @@
 #define Gigabytes(x) (Megabytes(x) * 1024)
 
 // Assert function for debugging.
-void Platform_Assert(b32 condition, const char* message, ...);
+void Platform_Assert(bool condition, const char* message, ...);
 
 // Allocate memory for a given size.
 void* Platform_Alloc(u64 size);
@@ -26,7 +26,7 @@ void* Platform_FillMemory(void* memory, s32 value, u64 size);
 void* Platform_CopyMemory(void* dest, const void* src, u64 size);
 
 // Initializes the window with a title and dimensions.
-b32 Platform_InitWindow(const char* title, s32 width, s32 height);
+bool Platform_InitWindow(const char* title, s32 width, s32 height);
 
 // Closes the window and cleans up resources.
 void Platform_CloseWindow();
@@ -38,7 +38,7 @@ s32 Platform_GetWindowWidth();
 s32 Platform_GetWindowHeight();
 
 // Returns true if the window should close.
-b32 Platform_WindowShouldClose();
+bool Platform_WindowShouldClose();
 
 // Processes input events.
 void Platform_PollEvents();

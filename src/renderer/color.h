@@ -2,8 +2,7 @@
 #include "core/types.h"
 #include <glm/glm.hpp>
 
-struct Color
-{
+struct Color {
     u8 r;
     u8 g;
     u8 b;
@@ -34,8 +33,7 @@ struct Color
 #define COLOR_MAROON          Color{ 150,  50,  90, 255 }   // Deep maroon
 #define COLOR_OLIVE           Color{ 140, 140,  90, 255 }   // Olive
 
-enum PixelFormat
-{
+enum PixelFormat {
     PixelFormat_RGBA,
     PixelFormat_ABGR,
 };

@@ -100,7 +100,7 @@ struct LineSegment {
 
 struct Edge {
     s32 seg;
-    b32 reversed;
+    bool reversed;
 };
 
 struct Sector {

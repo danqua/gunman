@@ -6,15 +6,13 @@
 #define MAX_LIGHTS 16
 #define MAX_RENDER_COMMANDS 128
 
-struct RenderCommand
-{
+struct RenderCommand {
     const Mesh* mesh;
     const Material* material;
     glm::mat4 transform;
 };
 
-struct RenderState
-{
+struct RenderState {
     glm::mat4 projectionMatrix;
     glm::mat4 viewMatrix;
     Light lights[MAX_LIGHTS];
@@ -30,8 +28,7 @@ struct RenderState
 
 static RenderState state;
 
-Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32 indexCount)
-{
+Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32 indexCount) {
     static BufferLayout layout = {};
     layout.count = 5;
     layout.stride = sizeof(Vertex);
@@ -49,8 +46,7 @@ Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32
     mesh.aabb.min = glm::vec3(FLT_MAX);
     mesh.aabb.max = glm::vec3(-FLT_MAX);
 
-    for (u32 i = 0; i < vertexCount; ++i)
-    {
+    for (u32 i = 0; i < vertexCount; ++i) {
         const Vertex& vertex = vertices[i];
         mesh.aabb.min = glm::min(mesh.aabb.min, vertex.position);
         mesh.aabb.max = glm::max(mesh.aabb.max, vertex.position);
@@ -59,8 +55,7 @@ Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32
     return mesh;
 }
 
-void Renderer_Init(Arena* arena)
-{
+void Renderer_Init(Arena* arena) {
     // Init framebuffer
     {
         state.framebuffer = RHI_CreateFramebuffer(320, 180);
@@ -85,31 +80,26 @@ void Renderer_Init(Arena* arena)
     LineRenderer_Init(arena);
 }
 
-void Renderer_Shutdown()
-{
+void Renderer_Shutdown() {
     RHI_DestroyFramebuffer(state.framebuffer);
     LineRenderer_Shutdown();
 }
 
-void Renderer_SetSize(s32 width, s32 height)
-{
-    if (state.framebuffer)
-    {
+void Renderer_SetSize(s32 width, s32 height) {
+    if (state.framebuffer) {
         RHI_DestroyFramebuffer(state.framebuffer);
     }
     state.framebuffer = RHI_CreateFramebuffer(width, height);
 }
 
-void Renderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view)
-{
+void Renderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view) {
     state.projectionMatrix = projection;
     state.viewMatrix = view;
 
     LineRenderer_BeginFrame(projection, view);
 }
 
-void Renderer_EndFrame()
-{
+void Renderer_EndFrame() {
     // Main pass
     u32 framebufferWidth = RHI_GetFramebufferWidth(state.framebuffer);
     u32 framebufferHeight = RHI_GetFramebufferHeight(state.framebuffer);
@@ -119,8 +109,7 @@ void Renderer_EndFrame()
     RHI_ClearColor();
     RHI_ClearDepth();
 
-    for (u32 i = 0; i < state.commandCount; ++i)
-    {
+    for (u32 i = 0; i < state.commandCount; ++i) {
         const RenderCommand* command = &state.commands[i];
         const Mesh* mesh = command->mesh;
         const Material* material = command->material;
@@ -132,21 +121,18 @@ void Renderer_EndFrame()
 
         RHI_SetShaderUniformVec3(material->shader, "uDiffuseColor", material->diffuseColor);
 
-        if (material->diffuseTexture)
-        {
+        if (material->diffuseTexture) {
             RHI_SetShaderUniformInt(material->shader, "uDiffuseTexture", 0);
             RHI_BindTexture(material->diffuseTexture, 0);
         }
 
         RHI_SetShaderUniformInt(material->shader, "uUseLightmap", (s32)material->useLightmap);
-        if (material->useLightmap)
-        {
+        if (material->useLightmap) {
             RHI_SetShaderUniformInt(material->shader, "uLightmapTexture", 1);
             RHI_BindTexture(material->lightmapTexture, 1);
         }
 
-        for (u32 i = 0; i < state.lightCount; ++i)
-        {
+        for (u32 i = 0; i < state.lightCount; ++i) {
             Light* light = &state.lights[i];
             RHI_SetShaderUniformVec3(material->shader, TextFormat("uLights[%d].position", i), light->position);
             RHI_SetShaderUniformVec3(material->shader, TextFormat("uLights[%d].color", i), light->color);
@@ -183,10 +169,8 @@ void Renderer_EndFrame()
     state.commandCount = 0;
 }
 
-void Renderer_AddLight(const Light* light)
-{
-    if (state.lightCount >= MAX_LIGHTS)
-    {
+void Renderer_AddLight(const Light* light) {
+    if (state.lightCount >= MAX_LIGHTS) {
         return;
     }
 
@@ -194,13 +178,11 @@ void Renderer_AddLight(const Light* light)
     state.lightCount++;
 }
 
-void Renderer_DrawLine(glm::vec3 v1, glm::vec3 v2, glm::vec4 color)
-{
+void Renderer_DrawLine(glm::vec3 v1, glm::vec3 v2, glm::vec4 color) {
     LineRenderer_DrawLine(v1, v2, color);
 }
 
-void Renderer_DrawBox(glm::vec3 min, glm::vec3 max, glm::vec4 color)
-{
+void Renderer_DrawBox(glm::vec3 min, glm::vec3 max, glm::vec4 color) {
     glm::vec3 v1 = { min.x, min.y, min.z };
     glm::vec3 v2 = { max.x, min.y, min.z };
     glm::vec3 v3 = { max.x, max.y, min.z };
@@ -226,10 +208,8 @@ void Renderer_DrawBox(glm::vec3 min, glm::vec3 max, glm::vec4 color)
     LineRenderer_DrawLine(v4, v8, color);
 }
 
-void Renderer_DrawMesh(const Mesh* mesh, const Material* material, const glm::mat4& transform)
-{
-    if (state.commandCount >= MAX_RENDER_COMMANDS)
-    {
+void Renderer_DrawMesh(const Mesh* mesh, const Material* material, const glm::mat4& transform) {
+    if (state.commandCount >= MAX_RENDER_COMMANDS) {
         return;
     }
 
@@ -239,8 +219,7 @@ void Renderer_DrawMesh(const Mesh* mesh, const Material* material, const glm::ma
     command->transform = transform;
 }
 
-void Renderer_DrawCircle(const glm::vec3& center, f32 radius, const glm::vec3& normal, u32 segments, const glm::vec4& color)
-{
+void Renderer_DrawCircle(const glm::vec3& center, f32 radius, const glm::vec3& normal, u32 segments, const glm::vec4& color) {
     if (radius <= 0.0f || segments < 3) return;
 
     glm::vec3 n = glm::normalize(normal);
@@ -253,8 +232,7 @@ void Renderer_DrawCircle(const glm::vec3& center, f32 radius, const glm::vec3& n
 
     glm::vec3 prev = center + xAxis * radius;
 
-    for (uint32_t i = 1; i <= segments; ++i)
-    {
+    for (uint32_t i = 1; i <= segments; ++i) {
         float angle = step * static_cast<float>(i);
         glm::vec3 dir = std::cos(angle) * xAxis + std::sin(angle) * yAxis;
         glm::vec3 curr = center + dir * radius;
@@ -264,9 +242,7 @@ void Renderer_DrawCircle(const glm::vec3& center, f32 radius, const glm::vec3& n
     }
 }
 
-
-void Renderer_DrawSphere(const glm::vec3& center, f32 radius, const glm::vec4& color)
-{
+void Renderer_DrawSphere(const glm::vec3& center, f32 radius, const glm::vec4& color) {
     Renderer_DrawCircle(center, radius, glm::vec3(0.0f, 1.0f, 0.0f), 32, color);
     Renderer_DrawCircle(center, radius, glm::vec3(1.0f, 0.0f, 0.0f), 32, color);
     Renderer_DrawCircle(center, radius, glm::vec3(0.0f, 0.0f, 1.0f), 32, color);

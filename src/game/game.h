@@ -146,13 +146,13 @@ GameContext* CreateGameState(Arena* arena, u16 gridWidth, u16 gridHeight, u16 ma
 void DestroyGameState(GameContext* state);
 
 // Spawns an entity and registers it in the grid.
-Entity* SpawnEntity(GameContext* state, EntityType type, v3 position);
+Entity* SpawnEntity(GameContext* state, EntityType type, glm::vec3 position);
 
 // Destroys an entity and removes it from the grid.
 void DestroyEntity(GameContext* state, Entity* entity);
 
 // player.cpp
-b32 Player_HasKey(const Entity* player, u32 key);
+bool Player_HasKey(const Entity* player, u32 key);
 void Player_AddKey(Entity* player, u32 key);
 
 void MovementSystem(Entity** entities, u32 entityCount, Level* level, f32 deltaTime);
@@ -177,8 +177,8 @@ void Game_Shutdown();
 void Game_Update(f32 dt);
 void Game_Render();
 
-Entity* CreateDoor(GameContext* context, v3 position, DoorAxis axis);
-b32 OpenDoor(GameContext* context, Entity* door);
+Entity* CreateDoor(GameContext* context, glm::vec3 position, DoorAxis axis);
+bool OpenDoor(GameContext* context, Entity* door);
 
 
 void UpdatePlayer(GameContext* context, Entity* entity, f32 deltaTime);

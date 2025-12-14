@@ -14,7 +14,7 @@ void OnDoorTriggerExit(GameContext* context, Entity* doorEntity, Entity* otherEn
 {
 }
 
-Entity* CreateDoor(GameContext* context, v3 position, DoorAxis axis)
+Entity* CreateDoor(GameContext* context, glm::vec3 position, DoorAxis axis)
 {
     Entity* lowerDoorEntity = SpawnEntity(context, EntityType_None, position);
     lowerDoorEntity->meshRenderer.enabled = true;
@@ -44,8 +44,8 @@ Entity* CreateDoor(GameContext* context, v3 position, DoorAxis axis)
     
     doorEntity->collider.enabled = true;
     doorEntity->collider.type = ColliderType_Box;
-    doorEntity->collider.aabb.min = v3(0.0f, 0.0f, 0.0f);
-    doorEntity->collider.aabb.max = v3(1.0f, 1.0f, 1.0f);
+    doorEntity->collider.aabb.min = glm::vec3(0.0f, 0.0f, 0.0f);
+    doorEntity->collider.aabb.max = glm::vec3(1.0f, 1.0f, 1.0f);
     doorEntity->collider.isTrigger = true;
     doorEntity->collider.onTriggerEnter = OnDoorTriggerEnter;
     doorEntity->collider.onTriggerExit = OnDoorTriggerExit;
@@ -123,7 +123,7 @@ void UpdateDoor(GameContext* context, Entity* doorEntity, f32 deltaTime)
 }
 
 
-b32 OpenDoor(GameContext* context, Entity* doorEntity)
+bool OpenDoor(GameContext* context, Entity* doorEntity)
 {
     if (doorEntity->door.state != DoorState_Closed)
         return false;

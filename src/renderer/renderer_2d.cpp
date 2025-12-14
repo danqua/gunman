@@ -8,14 +8,12 @@
 
 #define MAX_LINE_VERTICES 1024
 
-struct LineVertex
-{
+struct LineVertex {
     glm::vec3 position;
     glm::vec4 color;
 };
 
-struct Renderer2D
-{
+struct Renderer2D {
     Camera camera;
     LineVertex* vertices;
     u32 vertexCount;
@@ -26,8 +24,7 @@ struct Renderer2D
 
 static Renderer2D renderer;
 
-void Renderer2D_Init(Arena* arena)
-{
+void Renderer2D_Init(Arena* arena) {
     f32 width = (f32)Platform_GetWindowWidth();
     f32 height = (f32)Platform_GetWindowHeight();
 
@@ -69,8 +66,7 @@ void Renderer2D_Init(Arena* arena)
     )");
 }
 
-void Renderer2D_Shutdown()
-{
+void Renderer2D_Shutdown() {
     RHI_DestroyVertexBuffer(renderer.vertexBuffer);
     RHI_DestroyShader(renderer.shader);
     renderer.vertices = nullptr;
@@ -83,14 +79,12 @@ void Renderer2D_SetSize(f32 width, f32 height) {
     renderer.camera = Camera_CreateOrthographic(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 }
 
-void Renderer2D_BeginFrame()
-{
+void Renderer2D_BeginFrame() {
     renderer.vertexCount = 0;
     renderer.zOrder = 0;
 }
 
-void Renderer2D_EndFrame()
-{
+void Renderer2D_EndFrame() {
     Renderer2D_Flush();
 
     RHI_ClearColor();
@@ -104,22 +98,17 @@ void Renderer2D_EndFrame()
     RHI_SetDrawMode(DrawMode_Triangles);
 }
 
-void Renderer2D_Flush()
-{
-    if (renderer.vertexCount == 0)
-    {
+void Renderer2D_Flush() {
+    if (renderer.vertexCount == 0) {
         return;
     }
 
-   
     RHI_BindVertexBuffer(renderer.vertexBuffer);
     RHI_UpdateVertexBuffer(renderer.vertexBuffer, renderer.vertices, sizeof(LineVertex) * renderer.vertexCount);
 }
 
-void Renderer2D_DrawLine(const glm::vec2& start, const glm::vec2& end, Color color)
-{
-    if (renderer.vertexCount >= MAX_LINE_VERTICES)
-    {
+void Renderer2D_DrawLine(const glm::vec2& start, const glm::vec2& end, Color color) {
+    if (renderer.vertexCount >= MAX_LINE_VERTICES) {
         Renderer2D_Flush();
     }
 
@@ -133,8 +122,7 @@ void Renderer2D_DrawLine(const glm::vec2& start, const glm::vec2& end, Color col
     renderer.zOrder += 0.001f;
 }
 
-void Renderer2D_DrawRect(const glm::vec2& position, const glm::vec2& size, Color color)
-{
+void Renderer2D_DrawRect(const glm::vec2& position, const glm::vec2& size, Color color) {
     Renderer2D_DrawLine(position, glm::vec2(position.x + size.x, position.y), color);
     Renderer2D_DrawLine(glm::vec2(position.x + size.x, position.y), glm::vec2(position.x + size.x, position.y + size.y), color);
     Renderer2D_DrawLine(glm::vec2(position.x + size.x, position.y + size.y), glm::vec2(position.x, position.y + size.y), color);

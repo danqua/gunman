@@ -48,7 +48,7 @@ struct Tileset
 struct Tile
 {
     s32 data;
-    b32 solid;
+    bool solid;
     s32 floor;
     s32 ceiling;
     s32 wall;
@@ -75,8 +75,8 @@ void Level_AddEntity(Level* level, Entity* entity);
 
 void Level_RemoveEntity(Level* level, Entity* entity);
 
-void Level_UpdateEntityPosition(Level* level, Entity* entity, v2 lastPosition);
+void Level_UpdateEntityPosition(Level* level, Entity* entity, glm::vec2 lastPosition);
 
-b32 Level_CastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance = 128.0f);
+bool Level_CastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance = 128.0f);
 
 void Tileset_GetTileUVs(const Tileset* tileset, s32 tileId, glm::vec2* outMin, glm::vec2* outMax);

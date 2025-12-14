@@ -11,25 +11,25 @@ struct Entity;
 
 struct TransformComponent
 {
-    b32 enabled;
-    v3 position;
-    v3 rotation;
-    v3 scale;
+    bool enabled;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
 
-    v3 GetForward() const;
-    v3 GetRight() const;
-    v3 GetUp() const;
+    glm::vec3 GetForward() const;
+    glm::vec3 GetRight() const;
+    glm::vec3 GetUp() const;
 
-    m4x4 GetTransformMatrix() const;
-    m4x4 GetTransformMatrixNoScale() const;
+    glm::mat4 GetTransformMatrix() const;
+    glm::mat4 GetTransformMatrixNoScale() const;
 };
 
 struct MovementComponent
 {
-    b32 enabled;
-    v3 velocity;
+    bool enabled;
+    glm::vec3 velocity;
     f32 friction;
-    b32 applyFriction;
+    bool applyFriction;
 };
 
 enum ColliderType
@@ -43,7 +43,7 @@ typedef void(*TriggerCallback)(GameContext*, Entity*, Entity*);
 
 struct ColliderComponent
 {
-    b32 enabled;
+    bool enabled;
     ColliderType type;
 
     union
@@ -51,25 +51,25 @@ struct ColliderComponent
         f32 radius;
         Box3 aabb;
     };
-    v3 offset;
+    glm::vec3 offset;
 
     TriggerCallback onTriggerEnter;
     TriggerCallback onTriggerExit;
     TriggerCallback onTriggerStay;
-    b32 isTrigger;
+    bool isTrigger;
     Entity* currentEntity;
 };
 
 struct MeshRendererComponent
 {
-    b32 enabled;
+    bool enabled;
     Mesh* mesh;
     Material* material;
 };
 
 struct SpriteAnimationComponent
 {
-    b32 enabled;
+    bool enabled;
     f32 timer;
     u32 currentFrame;
     SpriteAnimation* animation;
@@ -83,16 +83,16 @@ enum LightType
 
 struct LightComponent
 {
-    b32 enabled;
+    bool enabled;
     LightType type;
-    v3 color;
+    glm::vec3 color;
     f32 intensity;
     f32 range;
 };
 
 struct CameraComponent
 {
-    b32 enabled;
+    bool enabled;
     f32 fov;
     f32 aspect;
     f32 nearClip;

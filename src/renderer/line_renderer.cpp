@@ -4,14 +4,12 @@
 
 #define MAX_LINES 1024
 
-struct LineVertex
-{
+struct LineVertex {
     glm::vec3 position;
     glm::vec4 color;
 };
 
-struct LineRendererState
-{
+struct LineRendererState {
     ShaderId shader;
     LineVertex* lines;
     u32 lineCount;
@@ -24,8 +22,7 @@ struct LineRendererState
 
 static LineRendererState state;
 
-void LineRenderer_Init(Arena* arena)
-{
+void LineRenderer_Init(Arena* arena) {
     u64 size = sizeof(LineVertex) * MAX_LINES;
     state.lines = ArenaPushArray(arena, LineVertex, MAX_LINES);
     state.shader = Asset_LoadShader("shaders/line.vs", "shaders/line.fs");
@@ -39,25 +36,21 @@ void LineRenderer_Init(Arena* arena)
     state.vbo = RHI_CreateVertexBuffer(nullptr, sizeof(LineVertex) * MAX_LINES, layout, BufferUsage_Dynamic);
 }
 
-void LineRenderer_Shutdown()
-{
+void LineRenderer_Shutdown() {
     state.lines = nullptr;
     state.lineCount = 0;
 }
 
-void LineRenderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view)
-{
+void LineRenderer_BeginFrame(const glm::mat4& projection, const glm::mat4& view) {
     state.projectionMatrix = projection;
     state.viewMatrix = view;
     state.lineCount = 0;
 }
 
-void LineRenderer_EndFrame()
-{
+void LineRenderer_EndFrame() {
     RHI_SetEnableDepthTest(false);
 
-    if (state.lineCount > 0)
-    {
+    if (state.lineCount > 0) {
         RHI_BindShader(state.shader);
         RHI_SetShaderUniformMat4(state.shader, "uProjectionMatrix", state.projectionMatrix);
         RHI_SetShaderUniformMat4(state.shader, "uViewMatrix", state.viewMatrix);
@@ -72,10 +65,8 @@ void LineRenderer_EndFrame()
     RHI_SetEnableDepthTest(false);
 }
 
-void LineRenderer_DrawLine(glm::vec3 v1, glm::vec3 v2, glm::vec4 color)
-{
-    if (state.lineCount + 2 > MAX_LINES)
-    {
+void LineRenderer_DrawLine(glm::vec3 v1, glm::vec3 v2, glm::vec4 color) {
+    if (state.lineCount + 2 > MAX_LINES) {
         return;
     }
 

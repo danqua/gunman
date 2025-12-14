@@ -2,22 +2,19 @@
 #include "core/types.h"
 #include <glm/glm.hpp>
 
-enum CameraType
-{
+enum CameraType {
     CameraType_Perspective,
     CameraType_Orthographic
 };
 
-struct PerspectiveCamera
-{
+struct PerspectiveCamera {
     f32 fov;        // Field of view in degrees.
     f32 aspect;     // Aspect ratio (width / height).
     f32 near;       // Near clipping plane.
     f32 far;        // Far clipping plane.
 };
 
-struct OrthographicCamera
-{
+struct OrthographicCamera {
     f32 left;       // Left clipping plane.
     f32 right;      // Right clipping plane.
     f32 bottom;     // Bottom clipping plane.
@@ -26,14 +23,12 @@ struct OrthographicCamera
     f32 far;        // Far clipping plane.
 };
 
-union CameraProjection
-{
+union CameraProjection {
     PerspectiveCamera perspective;
     OrthographicCamera orthographic;
 };
 
-struct Camera
-{
+struct Camera {
     CameraType type;                // The camera type (perspective or orthographic).
     CameraProjection projection;    // The camera projection settings.
 };

@@ -14,11 +14,3 @@ typedef int64_t s64;
 
 typedef float f32;
 typedef double f64;
-
-typedef bool b32; 
-
-
-typedef glm::vec2 v2;
-typedef glm::vec3 v3;
-typedef glm::vec4 v4;
-typedef glm::mat4 m4x4;

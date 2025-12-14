@@ -5,12 +5,12 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-static void HandleLevelCollisionOnAxis(const Level* level, Entity* entity, v2 axis)
+static void HandleLevelCollisionOnAxis(const Level* level, Entity* entity, glm::vec2 axis)
 {
     TransformComponent* transform = &entity->transform;
     MovementComponent* movement = &entity->movement;
 
-    v2 position = v2(transform->position.x, transform->position.z);
+    glm::vec2 position = glm::vec2(transform->position.x, transform->position.z);
 
     f32 radius = entity->collider.radius;
     u32 minX = (u32)(position.x - radius);
@@ -26,12 +26,12 @@ static void HandleLevelCollisionOnAxis(const Level* level, Entity* entity, v2 ax
 
             if (!tile || !tile->solid) continue;
 
-            Box2 tileBox = CreateBox2(v2(x, y), v2(x + 1, y + 1));
+            Box2 tileBox = CreateBox2(glm::vec2(x, y), glm::vec2(x + 1, y + 1));
 
             if (Box2_CircleIntersect(&tileBox, position, radius))
             {
-                v2 closestPoint = Box2_ClosestPoint(&tileBox, position);
-                v2 direction = Normalize(position - closestPoint);
+                glm::vec2 closestPoint = Box2_ClosestPoint(&tileBox, position);
+                glm::vec2 direction = Normalize(position - closestPoint);
 
                 if (axis.x == 1.0f)
                 {
@@ -68,17 +68,17 @@ void MovementSystem(Entity** entities, u32 entityCount, Level* level, f32 deltaT
 
         if (!entity->transform.enabled || !entity->movement.enabled) continue;
 
-        v3 lastPosition = entity->transform.position;
+        glm::vec3 lastPosition = entity->transform.position;
 
         ApplyFriction(&entity->movement);
 
         if (entity->collider.enabled)
         {
             entity->transform.position.x += entity->movement.velocity.x * deltaTime;
-            HandleLevelCollisionOnAxis(level, entity, v2(1, 0));
+            HandleLevelCollisionOnAxis(level, entity, glm::vec2(1, 0));
 
             entity->transform.position.z += entity->movement.velocity.z * deltaTime;
-            HandleLevelCollisionOnAxis(level, entity, v2(0, 1));
+            HandleLevelCollisionOnAxis(level, entity, glm::vec2(0, 1));
         }
 
         if (lastPosition.x != entity->transform.position.x ||
@@ -113,8 +113,8 @@ void CollisionSystem(Entity** entities, u32 entityCount, f32 deltaTime)
                     Box3_Translate(&aabb, entityB->transform.position);
                     if (Box3_SphereIntersect(&aabb, entityA->transform.position, entityA->collider.radius))
                     {
-                        v3 closestPoint = Box3_ClosestPoint(&aabb, entityA->transform.position);
-                        v3 direction = Normalize(entityA->transform.position - closestPoint);
+                        glm::vec3 closestPoint = Box3_ClosestPoint(&aabb, entityA->transform.position);
+                        glm::vec3 direction = Normalize(entityA->transform.position - closestPoint);
 
                         if (entityB->collider.isTrigger)
                         {
@@ -269,8 +269,8 @@ void RenderSystem(Entity** entities, u32 entityCount)
     f32 windowCenterY = (f32)Platform_GetWindowHeight() / 2.0f;
     f32 spriteWidth = 32.0f;
     f32 spriteHeight = 32.0f;
-    v2 position = v2(windowCenterX - spriteWidth * 0.5f, windowCenterY - spriteHeight * 0.5f);
-    v2 size = v2(spriteWidth, spriteHeight);
+    glm::vec2 position = glm::vec2(windowCenterX - spriteWidth * 0.5f, windowCenterY - spriteHeight * 0.5f);
+    glm::vec2 size = glm::vec2(spriteWidth, spriteHeight);
 
     Renderer2D_DrawRect(position, size, COLOR_WHITE);
 

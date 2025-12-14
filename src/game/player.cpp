@@ -8,8 +8,8 @@ void UpdatePlayer(GameContext* context, Entity* entity, f32 deltaTime)
     TransformComponent* transform = &entity->transform;
     MovementComponent* movement = &entity->movement;
 
-    v3 forward = transform->GetForward();
-    v3 right = transform->GetRight();
+    glm::vec3 forward = transform->GetForward();
+    glm::vec3 right = transform->GetRight();
 
     // Restrict the forward and right vectors to the horizontal plane
     forward.y = 0.0f;
@@ -48,7 +48,7 @@ void UpdatePlayer(GameContext* context, Entity* entity, f32 deltaTime)
     }
 
     // Update player rotation based on mouse movement
-    glm::vec2 mouseDelta = GetRelativeMousePosition();
+    glm::vec2 mouseDelta = GetDeltaMousePosition();
     transform->rotation.x -= mouseDelta.y * game->settings.mouseSensitivity;
     transform->rotation.y -= mouseDelta.x * game->settings.mouseSensitivity;
 
@@ -61,7 +61,7 @@ void UpdatePlayer(GameContext* context, Entity* entity, f32 deltaTime)
     player->pointLight->transform.position = transform->position;
 }
 
-b32 Player_HasKey(const Entity* player, u32 key)
+bool Player_HasKey(const Entity* player, u32 key)
 {
     /*
     const Player* data = &player->data.player;
@@ -91,17 +91,17 @@ void DrawPlayer(GameContext* context, Entity* entity)
 {
     Level* level = context->level;
 
-    v3 forwardVector = entity->transform.GetForward();
-    v2 forward2D = Normalize(v2(forwardVector.x, forwardVector.z));
+    glm::vec3 forwardVector = entity->transform.GetForward();
+    glm::vec2 forward2D = Normalize(glm::vec2(forwardVector.x, forwardVector.z));
 
     RayCastHit hit;
 
     if (Level_CastRay(level, glm::vec2(entity->transform.position.x, entity->transform.position.z), forward2D, &hit))
     {
-        v3 hitPosition = entity->transform.position + Normalize(v3(forward2D.x, 0.0f, forward2D.y)) * hit.distance;
+        glm::vec3 hitPosition = entity->transform.position + Normalize(glm::vec3(forward2D.x, 0.0f, forward2D.y)) * hit.distance;
         Box3 box = {};
-        box.min = v3(-0.05f);
-        box.max = v3(0.05f);
+        box.min = glm::vec3(-0.05f);
+        box.max = glm::vec3(0.05f);
         Box3_Translate(&box, hitPosition);
         Renderer_DrawBox(box.min, box.max, glm::vec4(1.0f, 1.0f, 0.5f, 1.0f));
     }

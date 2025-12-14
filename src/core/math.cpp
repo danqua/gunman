@@ -24,16 +24,16 @@ glm::vec2 Box2_ClosestPoint(const Box2* box, const glm::vec2& point)
     return closestPoint;
 }
 
-b32 Box2_CircleIntersect(const Box2* box, const glm::vec2& circleCenter, f32 circleRadius)
+bool Box2_CircleIntersect(const Box2* box, const glm::vec2& circleCenter, f32 circleRadius)
 {
     glm::vec2 closestPoint = Box2_ClosestPoint(box, circleCenter);
     glm::vec2 distance = circleCenter - closestPoint;
     return (glm::dot(distance, distance) < (circleRadius * circleRadius));
 }
 
-v2 Box2_GetCenter(const Box2* box)
+glm::vec2 Box2_GetCenter(const Box2* box)
 {
-    v2 center;
+    glm::vec2 center;
     center.x = (box->min.x + box->max.x) * 0.5f;
     center.y = (box->min.y + box->max.y) * 0.5f;
 
@@ -59,14 +59,14 @@ glm::vec3 Box3_ClosestPoint(const Box3* box, glm::vec3 point)
     return closestPoint;
 }
 
-b32 SpheresIntersect(const glm::vec3& center1, f32 radius1, const glm::vec3& center2, f32 radius)
+bool SpheresIntersect(const glm::vec3& center1, f32 radius1, const glm::vec3& center2, f32 radius)
 {
     glm::vec3 distance = center1 - center2;
     f32 radiusSum = radius1 + radius;
     return (glm::dot(distance, distance) < (radiusSum * radiusSum));
 }
 
-b32 Box3_RayIntersect(const Box3* box, v3 rayOrigin, v3 rayDirection, f32* outDistance)
+bool Box3_RayIntersect(const Box3* box, glm::vec3 rayOrigin, glm::vec3 rayDirection, f32* outDistance)
 {
     const f32 tMinInit = -FLT_MAX;
     const f32 tMaxInit = FLT_MAX;
@@ -112,14 +112,14 @@ b32 Box3_RayIntersect(const Box3* box, v3 rayOrigin, v3 rayDirection, f32* outDi
     return true;
 }
 
-b32 Box3_SphereIntersect(const Box3* box, glm::vec3 sphereCenter, f32 sphereRadius)
+bool Box3_SphereIntersect(const Box3* box, glm::vec3 sphereCenter, f32 sphereRadius)
 {
     glm::vec3 closestPoint = Box3_ClosestPoint(box, sphereCenter);
     glm::vec3 distance = sphereCenter - closestPoint;
     return (glm::dot(distance, distance) < (sphereRadius * sphereRadius));
 }
 
-void Box3_Translate(Box3* box, v3 translation)
+void Box3_Translate(Box3* box, glm::vec3 translation)
 {
     box->min += translation;
     box->max += translation;

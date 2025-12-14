@@ -8,35 +8,30 @@
 #define MAX_TEXTURES 256
 #define MAX_FRAMEBUFFERS 16
 
-struct Shader
-{
+struct Shader {
     u32 id;
 };
 
-struct Texture
-{
+struct Texture {
     u32 id;
     u32 width;
     u32 height;
 };
 
-struct VertexBuffer
-{
+struct VertexBuffer {
     u32 id;
     u32 vertexArray;
     u32 size;
     u32 usage;
 };
 
-struct IndexBuffer
-{
+struct IndexBuffer {
     u32 id;
     u32 size;
     u32 usage;
 };
 
-struct Framebuffer
-{
+struct Framebuffer {
     u32 id;
     s32 width;
     s32 height;
@@ -45,24 +40,23 @@ struct Framebuffer
 };
 
 static Shader shaders[MAX_SHADERS];
-static b32 shaderUsed[MAX_SHADERS];
+static bool shaderUsed[MAX_SHADERS];
 
 static Texture textures[MAX_TEXTURES];
-static b32 textureUsed[MAX_TEXTURES];
+static bool textureUsed[MAX_TEXTURES];
 
 static VertexBuffer vertexBuffers[MAX_VERTEX_BUFFERS];
-static b32 vertexBufferUsed[MAX_VERTEX_BUFFERS];
+static bool vertexBufferUsed[MAX_VERTEX_BUFFERS];
 
 static IndexBuffer indexBuffers[MAX_INDEX_BUFFERS];
-static b32 indexBufferUsed[MAX_INDEX_BUFFERS];
+static bool indexBufferUsed[MAX_INDEX_BUFFERS];
 
 static Framebuffer framebuffers[MAX_FRAMEBUFFERS];
-static b32 framebufferUsed[MAX_FRAMEBUFFERS];
+static bool framebufferUsed[MAX_FRAMEBUFFERS];
 
 static GLenum drawMode;
 
-static GLuint OpenGLCreateShader(GLenum type, const char* source)
-{
+static GLuint OpenGLCreateShader(GLenum type, const char* source) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
@@ -70,13 +64,11 @@ static GLuint OpenGLCreateShader(GLenum type, const char* source)
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
-    if (!success)
-    {
+    if (!success) {
         GLint infoLength = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
 
-        if (infoLength > 0)
-        {
+        if (infoLength > 0) {
             char* info = new char[infoLength];
             glGetShaderInfoLog(shader, infoLength, nullptr, info);
             Platform_LogWarning("Shader compilation error: %s\n", info);
@@ -90,8 +82,7 @@ static GLuint OpenGLCreateShader(GLenum type, const char* source)
     return shader;
 }
 
-static GLuint OpenGLCreateProgram(uint32_t vertexShader, uint32_t fragmentShader)
-{
+static GLuint OpenGLCreateProgram(uint32_t vertexShader, uint32_t fragmentShader) {
     GLuint program = glCreateProgram();
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
@@ -100,13 +91,11 @@ static GLuint OpenGLCreateProgram(uint32_t vertexShader, uint32_t fragmentShader
     GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
 
-    if (!success)
-    {
+    if (!success) {
         GLint infoLength = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLength);
 
-        if (infoLength > 0)
-        {
+        if (infoLength > 0) {
             char* info = new char[infoLength];
             glGetProgramInfoLog(program, infoLength, nullptr, info);
             Platform_LogWarning("Shader linking error: %s\n", info);
@@ -123,10 +112,8 @@ static GLuint OpenGLCreateProgram(uint32_t vertexShader, uint32_t fragmentShader
     return program;
 }
 
-static GLenum BufferUsageToOpenGL(BufferUsage usage)
-{
-    switch (usage)
-    {
+static GLenum BufferUsageToOpenGL(BufferUsage usage) {
+    switch (usage) {
         case BufferUsage_Static: return GL_STATIC_DRAW;
         case BufferUsage_Dynamic: return GL_DYNAMIC_DRAW;
         case BufferUsage_Stream: return GL_STREAM_DRAW;
@@ -134,10 +121,8 @@ static GLenum BufferUsageToOpenGL(BufferUsage usage)
     }
 }
 
-static GLenum AttribTypToOpenGL(AttribType type)
-{
-    switch (type)
-    {
+static GLenum AttribTypToOpenGL(AttribType type) {
+    switch (type) {
         case AttribType_Float: return GL_FLOAT;
         case AttribType_Float2: return GL_FLOAT;
         case AttribType_Float3: return GL_FLOAT;
@@ -149,10 +134,8 @@ static GLenum AttribTypToOpenGL(AttribType type)
     }
 }
 
-static GLint AttribTypeToSize(AttribType type)
-{
-    switch (type)
-    {
+static GLint AttribTypeToSize(AttribType type) {
+    switch (type) {
         case AttribType_Float: return 1;
         case AttribType_Float2: return 2;
         case AttribType_Float3: return 3;
@@ -164,10 +147,8 @@ static GLint AttribTypeToSize(AttribType type)
     }
 }
 
-static GLenum TextureFilterToOpenGL(TextureFilter filter)
-{
-    switch (filter)
-    {
+static GLenum TextureFilterToOpenGL(TextureFilter filter) {
+    switch (filter) {
         case TextureFilter_Nearest: return GL_NEAREST;
         case TextureFilter_Linear: return GL_LINEAR;
         case TextureFilter_Anisotropic: return GL_LINEAR_MIPMAP_NEAREST;
@@ -175,8 +156,7 @@ static GLenum TextureFilterToOpenGL(TextureFilter filter)
     }
 }
 
-void RHI_Init()
-{
+void RHI_Init() {
     gladLoadGL();
 
     drawMode = GL_TRIANGLES;
@@ -189,59 +169,46 @@ void RHI_Init()
     glFrontFace(GL_CCW);
 }
 
-void RHI_Shutdown()
-{
+void RHI_Shutdown() {
 }
 
-void RHI_ClearColor()
-{
+void RHI_ClearColor() {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void RHI_ClearDepth()
-{
+void RHI_ClearDepth() {
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void RHI_ClearStencil()
-{
+void RHI_ClearStencil() {
     glClear(GL_STENCIL_BUFFER_BIT);
 }
 
-void RHI_SetClearColor(f32 r, f32 g, f32 b, f32 a)
-{
+void RHI_SetClearColor(f32 r, f32 g, f32 b, f32 a) {
     glClearColor(r, g, b, a);
 }
 
-void RHI_SetViewport(u32 x, u32 y, u32 width, u32 height)
-{
+void RHI_SetViewport(u32 x, u32 y, u32 width, u32 height) {
     glViewport(x, y, width, height);
 }
 
-void RHI_SetEnableDepthTest(bool enable)
-{
+void RHI_SetEnableDepthTest(bool enable) {
     (enable ? glEnable : glDisable)(GL_DEPTH_TEST);
 }
 
-void RHI_SetCullFace(bool enable)
-{
-    if (enable)
-    {
+void RHI_SetCullFace(bool enable) {
+    if (enable) {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
     }
-    else
-    {
+    else {
         glDisable(GL_CULL_FACE);
     }
 }
 
-ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource)
-{
-    for (uint32_t i = 1; i < MAX_SHADERS; ++i)
-    {
-        if (!shaderUsed[i])
-        {
+ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource) {
+    for (uint32_t i = 1; i < MAX_SHADERS; ++i) {
+        if (!shaderUsed[i]) {
             shaderUsed[i] = true;
             Shader& shader = shaders[i];
 
@@ -249,8 +216,7 @@ ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource)
             GLuint fragmentShader = OpenGLCreateShader(GL_FRAGMENT_SHADER, fsSource);
             shader.id = OpenGLCreateProgram(vertexShader, fragmentShader);
 
-            if (shader.id == 0)
-            {
+            if (shader.id == 0) {
                 shaderUsed[i] = false;
                 return 0;
             }
@@ -260,8 +226,7 @@ ShaderId RHI_CreateShader(const char* vsSourec, const char* fsSource)
     return 0;
 }
 
-void RHI_DestroyShader(ShaderId shaderId)
-{
+void RHI_DestroyShader(ShaderId shaderId) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
@@ -270,8 +235,7 @@ void RHI_DestroyShader(ShaderId shaderId)
     shaderUsed[shaderId] = false;
 }
 
-void RHI_BindShader(ShaderId shaderId)
-{
+void RHI_BindShader(ShaderId shaderId) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
@@ -279,97 +243,81 @@ void RHI_BindShader(ShaderId shaderId)
     glUseProgram(shader.id);
 }
 
-void RHI_UnbindShader()
-{
+void RHI_UnbindShader() {
     glUseProgram(0);
 }
 
-void RHI_SetShaderUniformInt(ShaderId shaderId, const char* name, s32 value)
-{
+void RHI_SetShaderUniformInt(ShaderId shaderId, const char* name, s32 value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniform1i(location, value);
     }
 }
 
-void RHI_SetShaderUniformFloat(ShaderId shaderId, const char* name, f32 value)
-{
+void RHI_SetShaderUniformFloat(ShaderId shaderId, const char* name, f32 value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniform1f(location, value);
     }
 }
 
-void RHI_SetShaderUniformVec2(ShaderId shaderId, const char* name, const glm::vec2& value)
-{
+void RHI_SetShaderUniformVec2(ShaderId shaderId, const char* name, const glm::vec2& value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniform2f(location, value.x, value.y);
     }
 }
 
-void RHI_SetShaderUniformVec3(ShaderId shaderId, const char* name, const glm::vec3& value)
-{
+void RHI_SetShaderUniformVec3(ShaderId shaderId, const char* name, const glm::vec3& value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniform3f(location, value.x, value.y, value.z);
     }
 
 }
 
-void RHI_SetShaderUniformVec4(ShaderId shaderId, const char* name, const glm::vec4& value)
-{
+void RHI_SetShaderUniformVec4(ShaderId shaderId, const char* name, const glm::vec4& value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 
 }
 
-void RHI_SetShaderUniformMat4(ShaderId shaderId, const char* name, const glm::mat4& value)
-{
+void RHI_SetShaderUniformMat4(ShaderId shaderId, const char* name, const glm::mat4& value) {
     if (shaderId == 0 || shaderId >= MAX_SHADERS)
         return;
 
     Shader& shader = shaders[shaderId];
     GLint location = glGetUniformLocation(shader.id, name);
-    if (location != -1)
-    {
+    if (location != -1) {
         glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
     }
 }
 
-VertexBufferId RHI_CreateVertexBuffer(const void* data, u32 size, const BufferLayout& layout, BufferUsage usage)
-{
-    for (uint32_t i = 1; i < MAX_VERTEX_BUFFERS; ++i)
-    {
-        if (!vertexBufferUsed[i])
-        {
+VertexBufferId RHI_CreateVertexBuffer(const void* data, u32 size, const BufferLayout& layout, BufferUsage usage) {
+    for (uint32_t i = 1; i < MAX_VERTEX_BUFFERS; ++i) {
+        if (!vertexBufferUsed[i]) {
             vertexBufferUsed[i] = true;
             VertexBuffer& vertexBuffer = vertexBuffers[i];
 
@@ -384,8 +332,7 @@ VertexBufferId RHI_CreateVertexBuffer(const void* data, u32 size, const BufferLa
             vertexBuffer.usage = usage;
 
             u64 offset = 0;
-            for (u32 j = 0; j < layout.count; ++j)
-            {
+            for (u32 j = 0; j < layout.count; ++j) {
                 const BufferElement& element = layout.elements[j];
                 glEnableVertexAttribArray(element.location);
                 glVertexAttribPointer(element.location, AttribTypeToSize(element.type), AttribTypToOpenGL(element.type), GL_FALSE, layout.stride, (void*)offset);
@@ -398,8 +345,7 @@ VertexBufferId RHI_CreateVertexBuffer(const void* data, u32 size, const BufferLa
     return 0;
 }
 
-void RHI_DestroyVertexBuffer(VertexBufferId vertexBufferId)
-{
+void RHI_DestroyVertexBuffer(VertexBufferId vertexBufferId) {
     if (vertexBufferId == 0 || vertexBufferId >= MAX_VERTEX_BUFFERS)
         return;
 
@@ -409,8 +355,7 @@ void RHI_DestroyVertexBuffer(VertexBufferId vertexBufferId)
     vertexBufferUsed[vertexBufferId] = false;
 }
 
-void RHI_BindVertexBuffer(VertexBufferId vertexBufferId)
-{
+void RHI_BindVertexBuffer(VertexBufferId vertexBufferId) {
     if (vertexBufferId == 0 || vertexBufferId >= MAX_VERTEX_BUFFERS)
         return;
 
@@ -419,8 +364,7 @@ void RHI_BindVertexBuffer(VertexBufferId vertexBufferId)
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.id);
 }
 
-void RHI_UpdateVertexBuffer(VertexBufferId vertexBuffer, const void* data, u32 size, u32 offset)
-{
+void RHI_UpdateVertexBuffer(VertexBufferId vertexBuffer, const void* data, u32 size, u32 offset) {
     if (vertexBuffer == 0 || vertexBuffer >= MAX_VERTEX_BUFFERS)
         return;
 
@@ -429,18 +373,14 @@ void RHI_UpdateVertexBuffer(VertexBufferId vertexBuffer, const void* data, u32 s
     glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 }
 
-void RHI_UnbindVertexBuffer()
-{
+void RHI_UnbindVertexBuffer() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-IndexBufferId RHI_CreateIndexBuffer(const u32* indices, u32 count, BufferUsage usage)
-{
-    for (uint32_t i = 1; i < MAX_INDEX_BUFFERS; ++i)
-    {
-        if (!indexBufferUsed[i])
-        {
+IndexBufferId RHI_CreateIndexBuffer(const u32* indices, u32 count, BufferUsage usage) {
+    for (uint32_t i = 1; i < MAX_INDEX_BUFFERS; ++i) {
+        if (!indexBufferUsed[i]) {
             indexBufferUsed[i] = true;
             IndexBuffer& indexBuffer = indexBuffers[i];
 
@@ -457,8 +397,7 @@ IndexBufferId RHI_CreateIndexBuffer(const u32* indices, u32 count, BufferUsage u
     return 0;
 }
 
-void RHI_DestroyIndexBuffer(IndexBufferId indexBufferId)
-{
+void RHI_DestroyIndexBuffer(IndexBufferId indexBufferId) {
     if (indexBufferId == 0 || indexBufferId >= MAX_INDEX_BUFFERS)
         return;
 
@@ -467,8 +406,7 @@ void RHI_DestroyIndexBuffer(IndexBufferId indexBufferId)
     indexBufferUsed[indexBufferId] = false;
 }
 
-void RHI_BindIndexBuffer(IndexBufferId indexBufferId)
-{
+void RHI_BindIndexBuffer(IndexBufferId indexBufferId) {
     if (indexBufferId == 0 || indexBufferId >= MAX_INDEX_BUFFERS)
         return;
 
@@ -476,17 +414,13 @@ void RHI_BindIndexBuffer(IndexBufferId indexBufferId)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.id);
 }
 
-void RHI_UnbindIndexBuffer()
-{
+void RHI_UnbindIndexBuffer() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height, TextureFilter filter)
-{
-    for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
-    {
-        if (!textureUsed[i])
-        {
+TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height, TextureFilter filter) {
+    for (uint32_t i = 1; i < MAX_TEXTURES; ++i) {
+        if (!textureUsed[i]) {
             textureUsed[i] = true;
             Texture& texture = textures[i];
 
@@ -508,8 +442,7 @@ TextureId RHI_CreateTexture(const void* pixels, u32 width, u32 height, TextureFi
     return 0;
 }
 
-void RHI_DestroyTexture(TextureId textureId)
-{
+void RHI_DestroyTexture(TextureId textureId) {
     if (textureId == 0 || textureId >= MAX_TEXTURES)
         return;
 
@@ -518,8 +451,7 @@ void RHI_DestroyTexture(TextureId textureId)
     textureUsed[textureId] = false;
 }
 
-void RHI_BindTexture(TextureId textureId, u32 slot)
-{
+void RHI_BindTexture(TextureId textureId, u32 slot) {
     if (textureId == 0 || textureId >= MAX_TEXTURES)
         return;
 
@@ -528,8 +460,7 @@ void RHI_BindTexture(TextureId textureId, u32 slot)
     glBindTexture(GL_TEXTURE_2D, texture.id);
 }
 
-void RHI_UnbindTexture(TextureId textureId)
-{
+void RHI_UnbindTexture(TextureId textureId) {
     if (textureId == 0 || textureId >= MAX_TEXTURES)
         return;
 
@@ -537,15 +468,13 @@ void RHI_UnbindTexture(TextureId textureId)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag)
-{
+void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag) {
     glBindTexture(GL_TEXTURE_2D, textures[texture].id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TextureFilterToOpenGL(min));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TextureFilterToOpenGL(mag));
 }
 
-u32 RHI_GetTextureWidth(TextureId textureId)
-{
+u32 RHI_GetTextureWidth(TextureId textureId) {
     if (textureId == 0 || textureId >= MAX_TEXTURES)
         return 0;
 
@@ -553,8 +482,7 @@ u32 RHI_GetTextureWidth(TextureId textureId)
     return texture.width;
 }
 
-u32 RHI_GetTextureHeight(TextureId textureId)
-{
+u32 RHI_GetTextureHeight(TextureId textureId) {
     if (textureId == 0 || textureId >= MAX_TEXTURES)
         return 0;
 
@@ -563,22 +491,17 @@ u32 RHI_GetTextureHeight(TextureId textureId)
 }
 
 
-FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
-{
-    for (uint32_t i = 1; i < MAX_FRAMEBUFFERS; ++i)
-    {
-        if (!framebufferUsed[i])
-        {
+FramebufferId RHI_CreateFramebuffer(u32 width, u32 height) {
+    for (uint32_t i = 1; i < MAX_FRAMEBUFFERS; ++i) {
+        if (!framebufferUsed[i]) {
             framebufferUsed[i] = true;
             Framebuffer& framebuffer = framebuffers[i];
 
             glGenFramebuffers(1, &framebuffer.id);
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
 
-            for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
-            {
-                if (!textureUsed[i])
-                {
+            for (uint32_t i = 1; i < MAX_TEXTURES; ++i) {
+                if (!textureUsed[i]) {
                     textureUsed[i] = true;
                     Texture& texture = textures[i];
                     texture.width = width;
@@ -596,10 +519,8 @@ FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
                 }
             }
 
-            for (uint32_t i = 1; i < MAX_TEXTURES; ++i)
-            {
-                if (!textureUsed[i])
-                {
+            for (uint32_t i = 1; i < MAX_TEXTURES; ++i) {
+                if (!textureUsed[i]) {
                     textureUsed[i] = true;
                     Texture& texture = textures[i];
                     texture.width = width;
@@ -617,8 +538,7 @@ FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
                 }
             }
 
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            {
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                 Platform_LogWarning("Framebuffer is not complete!\n");
                 return 0;
             }
@@ -635,8 +555,7 @@ FramebufferId RHI_CreateFramebuffer(u32 width, u32 height)
     return 0;
 }
 
-void RHI_DestroyFramebuffer(FramebufferId framebufferId)
-{
+void RHI_DestroyFramebuffer(FramebufferId framebufferId) {
     if (framebufferId == 0 || framebufferId >= MAX_FRAMEBUFFERS)
         return;
 
@@ -647,8 +566,7 @@ void RHI_DestroyFramebuffer(FramebufferId framebufferId)
     framebufferUsed[framebufferId] = false;
 }
 
-void RHI_BindFramebuffer(FramebufferId framebufferId)
-{
+void RHI_BindFramebuffer(FramebufferId framebufferId) {
     if (framebufferId == 0 || framebufferId >= MAX_FRAMEBUFFERS)
         return;
 
@@ -657,14 +575,12 @@ void RHI_BindFramebuffer(FramebufferId framebufferId)
     glViewport(0, 0, framebuffer.width, framebuffer.height);
 }
 
-void RHI_UnbindFramebuffer()
-{
+void RHI_UnbindFramebuffer() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, Platform_GetWindowWidth(), Platform_GetWindowHeight());
 }
 
-TextureId RHI_GetFramebufferTexture(FramebufferId framebuffer)
-{
+TextureId RHI_GetFramebufferTexture(FramebufferId framebuffer) {
     if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
         return 0;
 
@@ -672,8 +588,7 @@ TextureId RHI_GetFramebufferTexture(FramebufferId framebuffer)
     return fb.colorAttachment;
 }
 
-TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer)
-{
+TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer) {
     if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
         return 0;
 
@@ -681,8 +596,7 @@ TextureId RHI_GetFramebufferDepthTexture(FramebufferId framebuffer)
     return fb.depthAttachment;
 }
 
-s32 RHI_GetFramebufferWidth(FramebufferId framebuffer)
-{
+s32 RHI_GetFramebufferWidth(FramebufferId framebuffer) {
     if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
         return 0;
 
@@ -690,8 +604,7 @@ s32 RHI_GetFramebufferWidth(FramebufferId framebuffer)
     return fb.width;
 }
 
-s32 RHI_GetFramebufferHeight(FramebufferId framebuffer)
-{
+s32 RHI_GetFramebufferHeight(FramebufferId framebuffer) {
     if (framebuffer == 0 || framebuffer >= MAX_FRAMEBUFFERS)
         return 0;
 
@@ -699,20 +612,16 @@ s32 RHI_GetFramebufferHeight(FramebufferId framebuffer)
     return fb.height;
 }
 
-void RHI_Draw(u32 vertexCount, u32 offset)
-{
+void RHI_Draw(u32 vertexCount, u32 offset) {
     glDrawArrays(drawMode, offset, vertexCount);
 }
 
-void RHI_DrawIndexed(u32 vertexCount)
-{
+void RHI_DrawIndexed(u32 vertexCount) {
     glDrawElements(drawMode, vertexCount, GL_UNSIGNED_INT, 0);
 }
 
-void RHI_SetDrawMode(DrawMode mode)
-{
-    switch (mode)
-    {
+void RHI_SetDrawMode(DrawMode mode) {
+    switch (mode) {
         case DrawMode_Triangles: drawMode = GL_TRIANGLES; break;
         case DrawMode_TriangleFan: drawMode = GL_TRIANGLE_FAN; break;
         case DrawMode_TriangleStrip: drawMode = GL_TRIANGLE_STRIP; break;

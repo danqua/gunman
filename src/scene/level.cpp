@@ -87,7 +87,7 @@ void Level_RemoveEntity(Level* level, Entity* entity)
     }
 }
 
-void Level_UpdateEntityPosition(Level* level, Entity* entity, v2 lastPosition)
+void Level_UpdateEntityPosition(Level* level, Entity* entity, glm::vec2 lastPosition)
 {
     TransformComponent* transform = &entity->transform;
     ColliderComponent* collider = &entity->collider;
@@ -111,30 +111,30 @@ void Level_UpdateEntityPosition(Level* level, Entity* entity, v2 lastPosition)
     Level_AddEntity(level, entity);
 }
 
-b32 Level_CastRay(const Level* level, v2 origin, v2 direction, RayCastHit* out, f32 maxDistance)
+bool Level_CastRay(const Level* level, glm::vec2 origin, glm::vec2 direction, RayCastHit* out, f32 maxDistance)
 {
     glm::ivec2 levelPostion = glm::ivec2(
         (s32)origin.x,
         (s32)origin.y
     );
 
-    v2 deltaDistance = v2(
+    glm::vec2 deltaDistance = glm::vec2(
         (direction.x == 0) ? 1e30f : glm::abs(1.0f / direction.x),
         (direction.y == 0) ? 1e30f : glm::abs(1.0f / direction.y)
     );
 
-    v2 step = v2(
+    glm::vec2 step = glm::vec2(
         direction.x > 0.0f ? 1.0f : -1.0f,
         direction.y > 0.0f ? 1.0f : -1.0f
     );
 
-    v2 sideDistance = v2(
+    glm::vec2 sideDistance = glm::vec2(
         (direction.x > 0.0f ? (levelPostion.x + 1.0f - origin.x) : (origin.x - levelPostion.x)) * deltaDistance.x,
         (direction.y > 0.0f ? (levelPostion.y + 1.0f - origin.y) : (origin.y - levelPostion.y)) * deltaDistance.y
     );
 
-    b32 hit = 0;
-    b32 side = 0;
+    bool hit = 0;
+    bool side = 0;
     f32 distance = 0.0f;
 
     while (!hit && distance <= maxDistance)
@@ -172,7 +172,7 @@ b32 Level_CastRay(const Level* level, v2 origin, v2 direction, RayCastHit* out, 
     {
         out->distance = side ? sideDistance.y - deltaDistance.y : sideDistance.x - deltaDistance.x;
         out->hit = origin + direction * out->distance;
-        out->normal = side ? v2(-1.0f, 0.0f) : v2(0.0f, -1.0f);
+        out->normal = side ? glm::vec2(-1.0f, 0.0f) : glm::vec2(0.0f, -1.0f);
         out->tileX = levelPostion.x;
         out->tileY = levelPostion.y;
         out->layer = Layer_Wall;

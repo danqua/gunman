@@ -21,7 +21,7 @@ AudioId Audio_LoadFromFile(const char* filename);
 void Audio_Free(AudioId audio);
 
 // Plays an audio clip with the specified volume and loop settings.
-AudioInstanceId Audio_PlayClip(AudioId audio, f32 volume = 1.0f, b32 loop = 1);
+AudioInstanceId Audio_PlayClip(AudioId audio, f32 volume = 1.0f, bool loop = 1);
 
 // Stops an audio instance.
 void Audio_StopInstance(AudioInstanceId instance);
