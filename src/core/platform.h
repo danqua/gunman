@@ -40,6 +40,9 @@ s32 Platform_GetWindowHeight();
 // Returns true if the window should close.
 bool Platform_WindowShouldClose();
 
+// Captures or releases the mouse cursor.
+void Platform_SetMouseCaptured(bool captured);
+
 // Processes input events.
 void Platform_PollEvents();
 

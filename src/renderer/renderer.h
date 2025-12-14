@@ -26,6 +26,7 @@ struct Material {
     TextureId lightmapTexture;
     glm::vec3 diffuseColor;
 
+    bool backfaceCulling;
     bool useLightmap;
 };
 

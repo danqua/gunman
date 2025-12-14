@@ -182,6 +182,10 @@ bool Platform_WindowShouldClose()
     return windowShouldClose;
 }
 
+void Platform_SetMouseCaptured(bool captured) {
+    SDL_SetWindowRelativeMouseMode(window, captured);
+}
+
 void Platform_PollEvents()
 {
     SDL_Event event;

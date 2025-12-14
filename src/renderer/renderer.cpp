@@ -114,6 +114,8 @@ void Renderer_EndFrame() {
         const Mesh* mesh = command->mesh;
         const Material* material = command->material;
 
+        RHI_SetCullFace(material->backfaceCulling);
+
         RHI_BindShader(material->shader);
         RHI_SetShaderUniformMat4(material->shader, "uProjectionMatrix", state.projectionMatrix);
         RHI_SetShaderUniformMat4(material->shader, "uViewMatrix", state.viewMatrix);
