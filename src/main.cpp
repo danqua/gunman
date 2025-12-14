@@ -60,6 +60,28 @@ bool IntersectRayAABB(glm::vec2 rayOrigin, glm::vec2 rayDir, const AABB& aabb, f
     return true;
 }
 
+bool IntersectRayLineSegment(glm::vec2 rayOrigin, glm::vec2 rayDir, glm::vec2 v1, glm::vec2 v2, f32* tOut) {
+    glm::vec2 segDir = v2 - v1;
+    glm::vec2 diff = v1 - rayOrigin;
+
+    float denom = rayDir.x * segDir.y - rayDir.y * segDir.x;
+
+    const f32 epsilon = 1e-6f;
+    if (fabsf(denom) < epsilon) {// Parallel
+        return false;
+    }
+
+    float t = (diff.x * segDir.y - diff.y * segDir.x) / denom;
+    float u = (diff.x * rayDir.y - diff.y * rayDir.x) / denom;
+
+    if (t >= 0 && u >= 0 && u <= 1) {
+        *tOut = t;
+        return true;
+    }
+
+    return false;
+}
+
 glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd) {
     glm::vec2 lineDir = lineEnd - lineStart;
     glm::vec2 pointDir = point - lineStart;
@@ -148,6 +170,10 @@ struct Player {
     s32 currentSector;
 };
 
+bool IsPortal(LineSegment* segment) {
+    return (segment->backSector != -1);
+}
+
 void DrawSector(const Sector* sector, Color color) {
     for (s32 i = 0; i < sector->edgeCount; ++i) {
         const Edge* edge = &edges[sector->firstEdge + i];
@@ -201,7 +227,6 @@ void UpdatePlayer(Player* player, f32 dt) {
                 continue;
             }
 
-
             glm::vec2 edgeDir = segment->v2 - segment->v1;
             glm::vec2 edgeNormal = glm::normalize(glm::vec2(-edgeDir.y, edgeDir.x));
             glm::vec2 penetrationVector = edgeNormal * (player->radius - glm::distance(closestPoint, player->position));
@@ -246,13 +271,15 @@ int main(int argc, char** argv)
     player.currentSector = 0;
 
     AABB box = {};
-    box.min = glm::vec2(5.0f, 2.0f);
-    box.max = glm::vec2(7.0f, 4.0f);
+    box.min = glm::vec2(4.0f, 2.0f);
+    box.max = glm::vec2(5.0f, 3.0f);
 
     while (!Platform_WindowShouldClose())
     {
         Platform_PollEvents();
         Audio_Update();
+
+        Arena_Clear(&transientStorage);
 
         if (IsKeyPressed(Key_Escape))
         {
@@ -271,18 +298,49 @@ int main(int argc, char** argv)
             DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
         }
 
-        Color boxColor = COLOR_WHITE;
-        f32 tMin, tMax;
-        
+
         glm::vec2 rayOrigin = player.position;
         glm::vec2 rayDir = glm::vec2(glm::cos(player.angle), glm::sin(player.angle));
 
-        if (IntersectRayAABB(rayOrigin, rayDir, box, &tMin, &tMax)) {
-            boxColor = COLOR_RED;
 
-            Renderer2D_DrawLine(rayOrigin, rayOrigin + rayDir * tMin, COLOR_GREEN);
+        f32* tList = ArenaPushArray(&transientStorage, f32, 256);
+        s32 tCount = 0;
+        for (s32 i = 0; i < 4; ++i) {
+            Sector* sector = &sectors[i];
+
+            for (s32 j = 0; j < sector->edgeCount; ++j) {
+                Edge* edge = &edges[sector->firstEdge + j];
+                LineSegment* segment = &segments[edge->seg];
+
+                if (IsPortal(segment)) {
+                    continue;
+                }
+
+                f32 t = 0.0f;
+                if (IntersectRayLineSegment(rayOrigin, rayDir, segment->v1, segment->v2, &t)) {
+                    tList[tCount++] = t;
+                }
+            }
         }
-        Renderer2D_DrawRect(box.min, box.max - box.min, boxColor);
+
+
+        f32 tMin, tMax;
+        if (IntersectRayAABB(rayOrigin, rayDir, box, &tMin, &tMax)) {
+            tList[tCount++] = tMin;
+        }
+        Renderer2D_DrawRect(box.min, box.max - box.min, COLOR_WHITE);
+
+        if (tCount > 0) {
+            f32 closestT = FLT_MAX;
+            for (s32 i = 0; i < tCount; ++i) {
+                if (tList[i] < closestT) {
+                    closestT = tList[i];
+                }
+            }
+
+            Renderer2D_DrawLine(rayOrigin, rayOrigin + rayDir * closestT, COLOR_BLUE);
+        }
+
 
         UpdatePlayer(&player, deltaTime);
         DrawPlayer(&player);
