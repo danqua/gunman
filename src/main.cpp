@@ -82,6 +82,26 @@ bool IntersectRayLineSegment(glm::vec2 rayOrigin, glm::vec2 rayDir, glm::vec2 v1
     return false;
 }
 
+bool IntersectRayCircle(glm::vec2 rayOrigin, glm::vec2 rayDir, glm::vec2 center, f32 radius, f32* tOut) {
+    glm::vec2 circleDir = rayOrigin - center;
+
+    f32 b = glm::dot(circleDir, rayDir);
+    f32 c = glm::dot(circleDir, circleDir) - radius * radius;
+
+    if (c > 0.0f && b > 0.0f) {
+        return false;
+    }
+
+    f32 discr = b * b - c;
+    if (discr < 0.0f) {
+        return false;
+    }
+
+    f32 t = -b - glm::sqrt(discr);
+    *tOut = glm::max(t, 0.0f);
+    return true;
+}
+
 glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd) {
     glm::vec2 lineDir = lineEnd - lineStart;
     glm::vec2 pointDir = point - lineStart;
@@ -170,6 +190,12 @@ struct Player {
     s32 currentSector;
 };
 
+struct Enemy {
+    glm::vec2 position;
+    f32 angle;
+    f32 radius;
+};
+
 bool IsPortal(LineSegment* segment) {
     return (segment->backSector != -1);
 }
@@ -239,6 +265,15 @@ void DrawPlayer(const Player* player) {
     glm::vec2 dir = glm::vec2(glm::cos(player->angle), glm::sin(player->angle));
     Renderer2D_DrawLine(player->position, player->position + dir * player->radius, COLOR_YELLOW);
     Renderer2D_DrawRect(player->position - glm::vec2(player->radius), glm::vec2(player->radius * 2), COLOR_YELLOW);
+}
+
+Mesh CreateSectorMesh(const Sector* sector) {
+    for (s32 i = 0; i < sector->edgeCount; ++i) {
+        const Edge* edge = &edges[sector->firstEdge + i];
+        const LineSegment* segment = &segments[edge->seg];
+
+
+    }
 }
 
 int main(int argc, char** argv)
