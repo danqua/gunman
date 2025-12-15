@@ -20,6 +20,10 @@ struct AABB {
     glm::vec2 max;
 };
 
+template <typename T> int Sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 bool IntersectRayAABB(glm::vec2 rayOrigin, glm::vec2 rayDir, const AABB& aabb, f32* tMinOut, f32* tMaxOut) {
     f32 tMin = (aabb.min.x - rayOrigin.x) / rayDir.x;
     f32 tMax = (aabb.max.x - rayOrigin.x) / rayDir.x;
@@ -137,22 +141,52 @@ glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
 }
 
 LineSegment segments[] = {
-    { {  1, 1 }, {  4, 1 }, 0, -1, 0 },
-    { {  4, 1 }, {  6, 3 }, 0, -1, 0 },
-    { {  6, 3 }, {  6, 5 }, 0,  1, 0 },
-    { {  6, 5 }, {  1, 5 }, 0, -1, 0 },
-    { {  1, 5 }, {  1, 1 }, 0, -1, 0 },
-    { {  6, 3 }, {  8, 3 }, 1, -1, 0 },
-    { {  8, 3 }, {  8, 5 }, 1,  2, 0 },
-    { {  8, 5 }, {  6, 5 }, 1, -1, 0 },
-    { {  8, 3 }, {  8, 1 }, 2, -1, 0 },
-    { {  8, 1 }, { 11, 1 }, 2, -1, 0 },
-    { { 11, 1 }, { 11, 3 }, 2,  3, 0 },
-    { { 11, 3 }, { 11, 5 }, 2, -1, 0 },
-    { { 11, 5 }, {  8, 5 }, 2, -1, 0 },
-    { { 11, 1 }, { 13, 1 }, 3, -1, 0 },
-    { { 13, 1 }, { 13, 3 }, 3, -1, 0 },
-    { { 13, 3 }, { 11, 3 }, 3, -1, 0 }
+    { {  1, 1 }, {  4, 1 }, 0, -1, 0 }, // 0
+    { {  4, 1 }, {  6, 3 }, 0, -1, 0 }, // 1
+    { {  6, 3 }, {  6, 5 }, 0,  1, 0 }, // 2
+    { {  6, 5 }, {  1, 5 }, 0, -1, 0 }, // 3
+    { {  1, 5 }, {  1, 1 }, 0, -1, 0 }, // 4
+    { {  6, 3 }, {  8, 3 }, 1, -1, 0 }, // 5
+    { {  8, 3 }, {  8, 5 }, 1,  2, 0 }, // 6
+    { {  8, 5 }, {  6, 5 }, 1, -1, 0 }, // 7
+    { {  8, 3 }, {  8, 1 }, 2, -1, 0 }, // 8
+    { {  8, 1 }, { 11, 1 }, 2, -1, 0 }, // 9
+    { { 11, 1 }, { 11, 3 }, 2,  3, 0 }, // 10
+    { { 11, 3 }, { 11, 5 }, 2, -1, 0 }, // 11
+    { { 11, 5 }, {  8, 5 }, 2, -1, 0 }, // 12
+    { { 11, 1 }, { 13, 1 }, 3, -1, 0 }, // 13
+    { { 13, 1 }, { 13, 3 }, 3,  4, 0 }, // 14
+    { { 13, 3 }, { 11, 3 }, 3, -1, 0 }, // 15
+
+    // sec[4]
+    { { 13, 1 }, { 14, 1 }, 4, -1, 0 }, // 16
+    { { 14, 1 }, { 14, 4 }, 4,  5, 0 }, // 17
+    { { 14, 4 }, { 14, 6 }, 4,  6, 0 }, // 18
+    { { 14, 6 }, { 14, 7 }, 4,  8, 0 }, // 19
+    { { 14, 7 }, { 13, 7 }, 4, -1, 0 }, // 20
+    { { 13, 7 }, { 13, 3 }, 4, -1, 0 }, // 21
+
+    // sec[5]
+    { { 14, 1 }, { 18, 1 }, 5, -1, 0 }, // 22
+    { { 18, 1 }, { 18, 4 }, 5, -1, 0 }, // 23
+    { { 18, 4 }, { 17, 4 }, 5,  7, 0 }, // 24
+    { { 17, 4 }, { 14, 4 }, 5,  6, 0 }, // 25
+    // 14, 1 <- 14, 4
+
+    // sec[6]
+    { { 17, 4 }, { 17, 6 },  6,  7, 0 }, // 26
+    { { 17, 6 }, { 14, 6 },  6,  8, 0 }, // 27
+    // 14, 4 <- 14, 6
+    
+    // sec[7]
+    { { 18, 4 }, { 18, 7 }, 7, -1, 0 }, // 28
+    { { 18, 7 }, { 17, 7 }, 7, -1, 0 }, // 29
+    { { 17, 7 }, { 17, 6 }, 7,  8, 0 }, // 30
+    // 17, 4 <- 17, 6
+
+    // sec[8]
+    { { 17, 7 }, { 14, 7 }, 8, -1, 0 }, // 31
+    // 14, 6 <- 14, 7
 };
 
 Edge edges[] = {
@@ -175,14 +209,51 @@ Edge edges[] = {
     { 14, false },
     { 15, false },
     { 10, true  },
+
+    { 16, false },
+    { 17, false },
+    { 18, false },
+    { 19, false },
+    { 20, false },
+    { 21, false },
+    { 14, true  },
+
+    { 22, false },
+    { 23, false },
+    { 24, false },
+    { 25, false },
+    { 17, true  },
+
+    { 25, true  },
+    { 26, false },
+    { 27, false },
+    { 18, true  },
+
+    { 28, false },
+    { 29, false },
+    { 30, false },
+    { 26, true  },
+    { 24, true  },
+
+    { 27, true  },
+    { 30, true  },
+    { 31, false },
+    { 19, true  }
 };
 
 Sector sectors[] = {
-    {  0, 5,  0, 3 },
-    {  5, 4,  1, 4 },
-    {  9, 6,  0, 3 },
-    { 15, 4, -1, 2 }
+    {  0, 5,  0, 3 }, // 0
+    {  5, 4,  1, 4 }, // 1
+    {  9, 6,  0, 3 }, // 2
+    { 15, 4, -1, 2 }, // 3
+    { 19, 7,  0, 4 }, // 4
+    { 26, 5,  0, 4 }, // 5
+    { 31, 4, 0.25f, 4 }, // 6
+    { 35, 5,  0, 4 }, // 7
+    { 40, 4 , 0, 4 }  // 8
 };
+
+const u32 sectorCount = 9;
 
 struct Player {
     glm::vec2 position;
@@ -214,7 +285,15 @@ void DrawSector(const Sector* sector, Color color) {
     }
 }
 
+static inline f32 SignedDistanceToLine(glm::vec2 p, glm::vec2 a, glm::vec2 b) {
+    glm::vec2 e = b - a;
+    return (e.x * (p.y - a.y) - e.y * (p.x - a.x));
+}
+
 void UpdatePlayer(Player* player, f32 dt) {
+    static glm::vec2 lastPosition;
+    lastPosition = player->position;
+
     f32 movementSpeed = 3.0f;
     f32 rotationSpeed = 1.0f;
     glm::vec2 forward = glm::vec2(glm::cos(player->angle), glm::sin(player->angle));
@@ -235,22 +314,19 @@ void UpdatePlayer(Player* player, f32 dt) {
     for (s32 i = 0; i < sector->edgeCount; ++i) {
         const Edge* edge = &edges[sector->firstEdge + i];
         const LineSegment* segment = &segments[edge->seg];
+
+        f32 sd1 = SignedDistanceToLine(lastPosition, segment->v1, segment->v2);
+        f32 sd2 = SignedDistanceToLine(player->position, segment->v1, segment->v2);
+        if (segment->backSector != -1 && Sign(sd1) != Sign(sd2)) {
+            s32 lastSector = player->currentSector;
+            player->currentSector = edge->reversed ? segment->frontSector : segment->backSector;
+            printf("%d -> %d\n", lastSector, player->currentSector);
+            break;
+        }
+
         glm::vec2 closestPoint = ClosestPointOnSegment(player->position, segment->v1, segment->v2);
         if (glm::distance(closestPoint, player->position) <= player->radius) {
             if (segment->backSector != -1) {
-                f32 dot = glm::dot(closestPoint, closestPoint - player->position);
-
-                if (edge->reversed && segment->frontSector != player->currentSector) {
-                    if (dot > 0 && player->currentSector != segment->frontSector) {
-                        player->currentSector = segment->frontSector;
-                        break;
-                    }
-                } else {
-                    if (dot < 0 && player->currentSector != segment->backSector) {
-                        player->currentSector = segment->backSector;
-                        break;
-                    }
-                }
                 continue;
             }
 
@@ -295,6 +371,10 @@ void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, Dyn
     indices.Add(baseIndex + 0);
 }
 
+void CreateFloorAndCeiling(const Sector* sector, DynamicArray<Vertex>& vertices, DynamicArray<u32>& indices) {
+
+}
+
 Mesh CreateSectorMesh(const Sector* sector) {
     DynamicArray<Vertex> vertices;
     DynamicArray<u32> indices;
@@ -330,29 +410,7 @@ Mesh CreateSectorMesh(const Sector* sector) {
             continue;
         }
 
-
-        glm::vec3 verts[4] = {
-            glm::vec3(segment->v1.x, sector->floorHeight, segment->v1.y),
-            glm::vec3(segment->v2.x, sector->floorHeight, segment->v2.y),
-            glm::vec3(segment->v2.x, sector->ceilingHeight, segment->v2.y),
-            glm::vec3(segment->v1.x, sector->ceilingHeight, segment->v1.y)
-        };
-
-        u32 baseIndex = vertices.size;
-
-        for (s32 j = 0; j < 4; ++j) {
-            Vertex vert = {};
-            vert.position = verts[j];
-            vert.normal = glm::vec3(segDir.x, 0.0f, segDir.y);
-            vertices.Add(vert);
-        }
-
-        indices.Add(baseIndex + 0);
-        indices.Add(baseIndex + 1);
-        indices.Add(baseIndex + 2);
-        indices.Add(baseIndex + 2);
-        indices.Add(baseIndex + 3);
-        indices.Add(baseIndex + 0);
+        CreateWall(segment->v1, segment->v2, sector->floorHeight, sector->ceilingHeight, vertices, indices);
     }
 
     
@@ -453,13 +511,35 @@ int main(int argc, char** argv)
     box.min = glm::vec2(4.0f, 2.0f);
     box.max = glm::vec2(5.0f, 3.0f);
 
-    Mesh sectorMeshes[4];
-    for (s32 i = 0; i < 4; ++i) {
+    Mesh sectorMeshes[sectorCount];
+    for (s32 i = 0; i < sectorCount; ++i) {
         sectorMeshes[i] = CreateSectorMesh(&sectors[i]);
     }
 
     Material sectorMaterial = {};
-    sectorMaterial.shader = Asset_LoadShader("shaders/normal.vert", "shaders/normal.frag");
+    sectorMaterial.shader = RHI_CreateShader(R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPosition;
+        layout (location = 1) in vec3 aNormal;
+
+        out vec3 vNormal;
+
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uViewMatrix;
+
+        void main() {
+            gl_Position = uProjectionMatrix * uViewMatrix * vec4(aPosition, 1.0);
+            vNormal = abs(aNormal);
+        }
+    )", R"(
+        #version 330 core
+        in vec3 vNormal;
+        out vec4 fragColor;
+
+        void main() {
+            fragColor = vec4(vNormal, 1.0);
+        }
+    )");
     sectorMaterial.backfaceCulling = true;
 
     bool toggleTo3D = false;
@@ -499,7 +579,7 @@ int main(int argc, char** argv)
             glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
             Renderer_BeginFrame(projection, view);
 
-            for (s32 i = 0; i < 4; ++i) {
+            for (s32 i = 0; i < sectorCount; ++i) {
                 Mesh* mesh = &sectorMeshes[i];
                 Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
 
@@ -513,7 +593,7 @@ int main(int argc, char** argv)
         } else {
             Renderer2D_BeginFrame();
 
-            for (s32 i = 0; i < 4; ++i) {
+            for (s32 i = 0; i < sectorCount; ++i) {
                 DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
             }
 
@@ -524,7 +604,7 @@ int main(int argc, char** argv)
 
             f32* tList = ArenaPushArray(&transientStorage, f32, 256);
             s32 tCount = 0;
-            for (s32 i = 0; i < 4; ++i) {
+            for (s32 i = 0; i < sectorCount; ++i) {
                 Sector* sector = &sectors[i];
 
                 for (s32 j = 0; j < sector->edgeCount; ++j) {
