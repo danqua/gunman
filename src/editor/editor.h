@@ -4,8 +4,8 @@
 #include "game/map.h"
 
 enum EditorDrawMode {
-    DrawMode_None,
-    DrawMode_Sector
+    EditorDrawMode_None,
+    EditorDrawMode_Sector
 };
 
 struct EditorState {

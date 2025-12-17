@@ -12,9 +12,17 @@
 
 static EditorState editorState;
 
+void DrawCursor() {
+    glm::vec2 mousePos = editorState.mousePosition;
+    f32 halfSize = 15.0f;
+    Renderer2D_DrawLine(mousePos - glm::vec2(halfSize, 0.0f), mousePos + glm::vec2(halfSize, 0.0f), COLOR_RED);
+    Renderer2D_DrawLine(mousePos - glm::vec2(0.0f, halfSize), mousePos + glm::vec2(0.0f, halfSize), COLOR_RED);
+}
+
 void Editor_Init() {
     s32 windowWidth = Platform_GetWindowWidth();
     s32 windowHeight = Platform_GetWindowHeight();
+    Platform_SetMouseCaptured(true);
     Renderer2D_SetSize((f32)windowWidth, (f32)windowHeight);
 
     editorState.zoomLevel = 1.0f;
@@ -56,16 +64,10 @@ void Editor_UpdateAndRender(f32 dt) {
         Renderer2D_SetViewOffset(editorState.cameraPosition.x, editorState.cameraPosition.y);
     }
 
-    
 
-    if (editorState.mode == DrawMode_None) {
+    if (editorState.mode == EditorDrawMode_None) {
         if (IsMouseButtonPressed(MouseButton_Left)) {
-            editorState.mode = DrawMode_Sector;
-            editorState.points.Add(glm::vec2(editorState.snappedPos));
-        }
-    } else if (editorState.mode == DrawMode_Sector) {
-        if (IsMouseButtonPressed(MouseButton_Left)) {
-            editorState.points.Add(glm::vec2(editorState.snappedPos));
+            DrawModeSector_Enter(&editorState);
         }
     }
     
@@ -84,18 +86,16 @@ void Editor_UpdateAndRender(f32 dt) {
         Renderer2D_DrawLine(glm::vec2((f32)x, 0.0f), glm::vec2((f32)x, (f32)windowHeight), COLOR_DARK_GRAY);
     }
 
-    if (editorState.mode == DrawMode_Sector) {
-        glm::vec2 segmentPos = glm::vec2(editorState.snappedPos);
-        for (s32 i = 0; i < editorState.points.size - 1; ++i) {
-            glm::vec2 p1 = editorState.points.data[i];
-            glm::vec2 p2 = editorState.points.data[i + 1];
-            Renderer2D_DrawLine(p1, p2, COLOR_WHITE);
-            Renderer2D_DrawRect(p1 - glm::vec2(2.5f), glm::vec2(5.0f, 5.0f), COLOR_WHITE);
-        }
 
-        glm::vec2 lastPoint = editorState.points.data[editorState.points.size - 1];
-        Renderer2D_DrawLine(lastPoint, segmentPos, COLOR_WHITE);
-        Renderer2D_DrawRect(lastPoint - glm::vec2(2.5f), glm::vec2(5.0f, 5.0f), COLOR_WHITE);
+    switch (editorState.mode) {
+        case EditorDrawMode_None: {
+            DrawModeSector_Enter(&editorState);
+        } break;
+
+        case EditorDrawMode_Sector: {
+            DrawModeSector_Update(&editorState, dt);
+            DrawModeSector_Render(&editorState);
+        } break;
     }
 
     for (s32 i = 0; i < editorState.segments.size; ++i) {
@@ -107,5 +107,6 @@ void Editor_UpdateAndRender(f32 dt) {
 
     Renderer2D_DrawRect(glm::vec2(editorState.snappedPos) - glm::vec2(5.0f), glm::vec2(10.0f, 10.0f), COLOR_WHITE);
 
+    DrawCursor();
     Renderer2D_EndFrame();
 }
