@@ -98,6 +98,15 @@ static Key ConvertScancodeToKey(SDL_Scancode code) {
     }
 }
 
+static MouseButton ConvertSDLButtonToMouseButton(u8 sdlButton) {
+    switch (sdlButton) {
+        case SDL_BUTTON_LEFT:   return MouseButton_Left;
+        case SDL_BUTTON_RIGHT:  return MouseButton_Right;
+        case SDL_BUTTON_MIDDLE: return MouseButton_Middle;
+        default:                return MouseButton_Count;
+    }
+}
+
 
 void Platform_Assert(bool condition, const char* message, ...)
 {
@@ -205,22 +214,21 @@ void Platform_PollEvents()
                 Input_ProcessKeyEvent(ConvertScancodeToKey(event.key.scancode), false);
             } break;
 
-        case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            // Handle mouse button down event
-            break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+                Input_ProcessMouseButtonEvent(ConvertSDLButtonToMouseButton(event.button.button), true);
+            } break;
 
-        case SDL_EVENT_MOUSE_BUTTON_UP:
-            // Handle mouse button up event
-            break;
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                Input_ProcessMouseButtonEvent(ConvertSDLButtonToMouseButton(event.button.button), false);
+            } break;
 
-        case SDL_EVENT_MOUSE_MOTION:
-            Input_ProcessMouseMoveEvent(
-                event.motion.x,
-                event.motion.y,
-                event.motion.xrel,
-                event.motion.yrel
-            );
-            break;
+            case SDL_EVENT_MOUSE_WHEEL: {
+                Input_ProcessMouseWheelEvent((f32)event.wheel.y);
+            }
+
+            case SDL_EVENT_MOUSE_MOTION: {
+                Input_ProcessMouseMoveEvent(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
+            } break;
         }
     }
 }

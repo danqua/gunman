@@ -13,6 +13,9 @@ void Renderer2D_Shutdown();
 // Sets the size of the rendering viewport.
 void Renderer2D_SetSize(f32 width, f32 height);
 
+// Sets the view offset for the 2D renderer.
+void Renderer2D_SetViewOffset(f32 offsetX, f32 offsetY);
+
 // Begins a new frame for the 2D renderer, setting up necessary state.
 void Renderer2D_BeginFrame();
 

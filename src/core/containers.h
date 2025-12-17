@@ -1,5 +1,6 @@
 #pragma once
 #include "core/types.h"
+#include "core/platform.h"
 
 template <typename type>
 struct DynamicArray {

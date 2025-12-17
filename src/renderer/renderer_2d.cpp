@@ -15,6 +15,7 @@ struct LineVertex {
 
 struct Renderer2D {
     Camera camera;
+    glm::vec2 viewOffset;
     LineVertex* vertices;
     u32 vertexCount;
     VertexBufferId vertexBuffer;
@@ -29,6 +30,7 @@ void Renderer2D_Init(Arena* arena) {
     f32 height = (f32)Platform_GetWindowHeight();
 
     renderer.camera = Camera_CreateOrthographic(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+    renderer.viewOffset = glm::vec2(0.0f);
     renderer.zOrder = 0.0f;
     renderer.vertices = (LineVertex*)Arena_PushSize(arena, sizeof(LineVertex) * MAX_LINE_VERTICES);
     renderer.vertexCount = 0;
@@ -79,6 +81,10 @@ void Renderer2D_SetSize(f32 width, f32 height) {
     renderer.camera = Camera_CreateOrthographic(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 }
 
+void Renderer2D_SetViewOffset(f32 offsetX, f32 offsetY) {
+    renderer.viewOffset = glm::vec2(offsetX, offsetY);
+}
+
 void Renderer2D_BeginFrame() {
     renderer.vertexCount = 0;
     renderer.zOrder = 0;
@@ -92,7 +98,7 @@ void Renderer2D_EndFrame() {
     RHI_SetEnableDepthTest(false);
     RHI_BindShader(renderer.shader);
     RHI_SetShaderUniformMat4(renderer.shader, "uProjectionMatrix", Camera_GetProjectionMatrix(&renderer.camera));
-    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", glm::lookAt(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    RHI_SetShaderUniformMat4(renderer.shader, "uViewMatrix", glm::lookAt(glm::vec3(renderer.viewOffset, 0.0f), glm::vec3(renderer.viewOffset, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     RHI_Draw(renderer.vertexCount);
     RHI_SetEnableDepthTest(true);
     RHI_SetDrawMode(DrawMode_Triangles);

@@ -11,9 +11,12 @@
 #include "renderer/renderer_2d.h"
 #include "renderer/renderer.h"
 #include "renderer/sprite.h"
+#include "editor/editor.h"
 
 #include "scene/camera_controller.h"
 #include "scene/transform.h"
+
+#include "game/map.h"
 
 struct AABB {
     glm::vec2 min;
@@ -114,26 +117,6 @@ glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lin
     t = glm::clamp(t, 0.0f, 1.0f);
     return lineStart + t * lineDir;
 }
-
-struct LineSegment {
-    glm::vec2 v1;
-    glm::vec2 v2;
-    s32 frontSector;
-    s32 backSector;
-    u32 flags;
-};
-
-struct Edge {
-    s32 seg;
-    bool reversed;
-};
-
-struct Sector {
-    s32 firstEdge;
-    s32 edgeCount;
-    f32 floorHeight;
-    f32 ceilingHeight;
-};
 
 glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
     glm::vec2 result = ProjectPointOnLine(point, v1, v2);
@@ -501,6 +484,8 @@ int main(int argc, char** argv)
     
     Audio_Init(&permanentStorage);
 
+    Editor_Init();
+
     Player player = {};
     player.position = glm::vec2(3.0f, 3.0f);
     player.angle = 0.0f;
@@ -544,6 +529,7 @@ int main(int argc, char** argv)
 
     bool toggleTo3D = false;
     bool debugDraw = false;
+    bool editorMode = true   ;
 
     while (!Platform_WindowShouldClose())
     {
@@ -557,13 +543,8 @@ int main(int argc, char** argv)
             Platform_CloseWindow();
         }
 
-        if (IsKeyPressed(Key_F1)) {
-            toggleTo3D = !toggleTo3D;
-            Platform_SetMouseCaptured(toggleTo3D);
-        }
-
-        if (IsKeyPressed(Key_F2)) {
-            debugDraw = !debugDraw;
+        if (IsKeyPressed(Key_F3)) {
+            editorMode = !editorMode;
         }
 
         static f64 lastTime = Platform_GetTime();
@@ -571,82 +552,96 @@ int main(int argc, char** argv)
         f32 deltaTime = (f32)(currentTime - lastTime);
         lastTime = currentTime;
 
-        UpdateCameraControls(&controls, &cameraTransform, deltaTime);
 
-
-        if (toggleTo3D) {
-            glm::mat4 projection = Camera_GetProjectionMatrix(&camera);
-            glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
-            Renderer_BeginFrame(projection, view);
-
-            for (s32 i = 0; i < sectorCount; ++i) {
-                Mesh* mesh = &sectorMeshes[i];
-                Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
-
-                if (debugDraw) {
-                    Renderer_DrawBox(mesh->aabb.min, mesh->aabb.max, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-                }
-            }
-
-            Renderer_EndFrame();
-
+        if (editorMode) {
+            Editor_UpdateAndRender(deltaTime);
         } else {
-            Renderer2D_BeginFrame();
+            if (IsKeyPressed(Key_F1)) {
+                toggleTo3D = !toggleTo3D;
+                Platform_SetMouseCaptured(toggleTo3D);
+            }
 
-            for (s32 i = 0; i < sectorCount; ++i) {
-                DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
+            if (IsKeyPressed(Key_F2)) {
+                debugDraw = !debugDraw;
             }
 
 
-            glm::vec2 rayOrigin = player.position;
-            glm::vec2 rayDir = glm::vec2(glm::cos(player.angle), glm::sin(player.angle));
+            UpdateCameraControls(&controls, &cameraTransform, deltaTime);
 
 
-            f32* tList = ArenaPushArray(&transientStorage, f32, 256);
-            s32 tCount = 0;
-            for (s32 i = 0; i < sectorCount; ++i) {
-                Sector* sector = &sectors[i];
+            if (toggleTo3D) {
+                glm::mat4 projection = Camera_GetProjectionMatrix(&camera);
+                glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
+                Renderer_BeginFrame(projection, view);
 
-                for (s32 j = 0; j < sector->edgeCount; ++j) {
-                    Edge* edge = &edges[sector->firstEdge + j];
-                    LineSegment* segment = &segments[edge->seg];
+                for (s32 i = 0; i < sectorCount; ++i) {
+                    Mesh* mesh = &sectorMeshes[i];
+                    Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
 
-                    if (IsPortal(segment)) {
-                        continue;
-                    }
-
-                    f32 t = 0.0f;
-                    if (IntersectRayLineSegment(rayOrigin, rayDir, segment->v1, segment->v2, &t)) {
-                        tList[tCount++] = t;
-                    }
-                }
-            }
-
-
-            f32 tMin, tMax;
-            if (IntersectRayAABB(rayOrigin, rayDir, box, &tMin, &tMax)) {
-                tList[tCount++] = tMin;
-            }
-            Renderer2D_DrawRect(box.min, box.max - box.min, COLOR_WHITE);
-
-            if (tCount > 0) {
-                f32 closestT = FLT_MAX;
-                for (s32 i = 0; i < tCount; ++i) {
-                    if (tList[i] < closestT) {
-                        closestT = tList[i];
+                    if (debugDraw) {
+                        Renderer_DrawBox(mesh->aabb.min, mesh->aabb.max, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
                     }
                 }
 
-                Renderer2D_DrawLine(rayOrigin, rayOrigin + rayDir * closestT, COLOR_BLUE);
+                Renderer_EndFrame();
+
+            } else {
+                Renderer2D_BeginFrame();
+
+                for (s32 i = 0; i < sectorCount; ++i) {
+                    DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
+                }
+
+
+                glm::vec2 rayOrigin = player.position;
+                glm::vec2 rayDir = glm::vec2(glm::cos(player.angle), glm::sin(player.angle));
+
+
+                f32* tList = ArenaPushArray(&transientStorage, f32, 256);
+                s32 tCount = 0;
+                for (s32 i = 0; i < sectorCount; ++i) {
+                    Sector* sector = &sectors[i];
+
+                    for (s32 j = 0; j < sector->edgeCount; ++j) {
+                        Edge* edge = &edges[sector->firstEdge + j];
+                        LineSegment* segment = &segments[edge->seg];
+
+                        if (IsPortal(segment)) {
+                            continue;
+                        }
+
+                        f32 t = 0.0f;
+                        if (IntersectRayLineSegment(rayOrigin, rayDir, segment->v1, segment->v2, &t)) {
+                            tList[tCount++] = t;
+                        }
+                    }
+                }
+
+
+                f32 tMin, tMax;
+                if (IntersectRayAABB(rayOrigin, rayDir, box, &tMin, &tMax)) {
+                    tList[tCount++] = tMin;
+                }
+                Renderer2D_DrawRect(box.min, box.max - box.min, COLOR_WHITE);
+
+                if (tCount > 0) {
+                    f32 closestT = FLT_MAX;
+                    for (s32 i = 0; i < tCount; ++i) {
+                        if (tList[i] < closestT) {
+                            closestT = tList[i];
+                        }
+                    }
+
+                    Renderer2D_DrawLine(rayOrigin, rayOrigin + rayDir * closestT, COLOR_BLUE);
+                }
+
+
+                UpdatePlayer(&player, deltaTime);
+                DrawPlayer(&player);
+
+                Renderer2D_EndFrame();
             }
-
-
-            UpdatePlayer(&player, deltaTime);
-            DrawPlayer(&player);
-
-            Renderer2D_EndFrame();
         }
-        
         Platform_SwapBuffers();
         Input_NextFrame();
     }

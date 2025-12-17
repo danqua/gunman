@@ -65,8 +65,14 @@ void Input_NextFrame();
 // Sets the state for the given key.
 void Input_ProcessKeyEvent(Key key, bool down);
 
+// Sets the state for the given mouse button.
+void Input_ProcessMouseButtonEvent(MouseButton button, bool down);
+
 // Sets the state for the mouse position.
 void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel);
+
+// Sets the state for the mouse wheel delta.
+void Input_ProcessMouseWheelEvent(f32 delta);
 
 // Returns true when the key is down, false otherwise.
 bool IsKeyDown(Key key);
@@ -77,8 +83,20 @@ bool IsKeyPressed(Key key);
 // Returns true when the key has been releases in the current frame, false otherwise.
 bool IsKeyReleased(Key key);
 
+// Returns true when the mouse button is down, false otherwise.
+bool IsMouseButtonDown(MouseButton button);
+
+// Returns true when the mouse button has been pressed in the current frame, false otherwise.
+bool IsMouseButtonPressed(MouseButton button);
+
+// Returns true when the mouse button has been released in the current frame, false otherwise.
+bool IsMouseButtonReleased(MouseButton button);
+
 // Returns the mouse position in the window.
 glm::vec2 GetMousePosition();
 
 // Returns the delta mouse position between the last and current frame.
 glm::vec2 GetDeltaMousePosition();
+
+// Returns the mouse wheel delta for the current frame.
+f32 GetMouseWheelDelta();
