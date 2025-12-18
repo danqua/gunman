@@ -5,7 +5,8 @@
 #include "editor.h"
 
 void DrawModeSector_Enter(EditorState* state) {
-    state->points.push_back(state->snappedPos);
+    glm::ivec2 snappedPos = GetSnappedMousePosition(state);
+    state->points.push_back(snappedPos);
 }
 
 void DrawModeSector_Exit(EditorState* state) {
@@ -15,11 +16,9 @@ void DrawModeSector_Exit(EditorState* state) {
 void DrawModeSector_Update(EditorState* state, f32 dt) {
 
     if (IsKeyPressed(Key_Space)) {
+        glm::ivec2 snappedPos = GetSnappedMousePosition(state);
 
-        glm::ivec2 point = state->snappedPos;
-
-
-        if (state->points.size() > 0 && point == state->points[0]) {
+        if (state->points.size() > 0 && snappedPos == state->points[0]) {
             for (u64 i = 0; i < state->points.size(); ++i) {
                 
                 glm::ivec2 p1 = state->points[i];
@@ -73,7 +72,7 @@ void DrawModeSector_Update(EditorState* state, f32 dt) {
 
             Editor_ChangeState(state, EditorDrawMode_None);
         } else {
-            state->points.push_back(state->snappedPos);
+            state->points.push_back(snappedPos);
         }
 
     }
@@ -83,8 +82,8 @@ void DrawModeSector_Render(EditorState* state) {
     if (state->points.size() == 0) {
         return;
     }
-
-    glm::vec2 segmentPos = glm::vec2(state->snappedPos);
+    glm::ivec2 snappedPos = GetSnappedMousePosition(state);
+    glm::vec2 segmentPos = glm::vec2(snappedPos);
     for (s32 i = 0; i < state->points.size() - 1; ++i) {
         glm::vec2 p1 = glm::vec2(state->points[i]);
         glm::vec2 p2 = glm::vec2(state->points[i + 1]);

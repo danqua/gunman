@@ -19,8 +19,10 @@ enum EditorDrawMode {
 struct EditorState {
     Camera2D camera;
 
-    glm::vec2 mousePosition;
-    glm::ivec2 snappedPos;
+    u16 gridSize;
+
+    glm::vec2 dragAnchor;
+    bool isDragging;
 
     EditorDrawMode mode;
 
@@ -39,3 +41,6 @@ glm::ivec2 Editor_SnapToGrid(const EditorState* state, const glm::vec2& position
 void Editor_ChangeState(EditorState* state, EditorDrawMode newMode);
 
 bool PointOnSegment(glm::vec2 p, glm::vec2 v1, glm::vec2 v2);
+
+glm::ivec2 SnapToGrid(const EditorState* state, glm::vec2 worldPos);
+glm::ivec2 GetSnappedMousePosition(const EditorState* state);

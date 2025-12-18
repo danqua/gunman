@@ -8,8 +8,8 @@
 
 Camera2D CreateDefaultCamera2D(s32 viewportWidth, s32 viewportHeight) {
     Camera2D camera = {};
-    camera.pixelsPerUnit = 32.0f;
-    camera.minPixelsPerUnit = 8.0f;
+    camera.pixelsPerUnit = 1.0f;
+    camera.minPixelsPerUnit = 1.0f;
     camera.maxPixelsPerUnit = 128.0f;
     camera.viewportSize = glm::ivec2(viewportWidth, viewportHeight);
     return camera;
@@ -44,6 +44,7 @@ void Camera2D_ZoomAtWorldPoint(Camera2D* camera, f32 zoomFactor, glm::vec2 ancho
     f32 newPixelsPerUnit = glm::clamp(oldPixelsPerUnit * zoomFactor, camera->minPixelsPerUnit, camera->maxPixelsPerUnit);
     f32 scale = oldPixelsPerUnit / newPixelsPerUnit;
 
+    printf("%.2f\n", scale);
     glm::vec2 worldPosBeforeZoom = Camera2D_ScreenToWorld(camera, anchorPoint);
     camera->pixelsPerUnit = newPixelsPerUnit;
 

@@ -192,9 +192,9 @@ void DrawSector(const Sector* sector, Color color) {
         const LineSegment* segment = &segments[edge->seg];
 
         if (segment->backSector != -1 || edge->reversed) {
-            Renderer2D_DrawLine(segment->v1 * 32.0f, segment->v2 * 32.0f, COLOR_DARK_GRAY);
+            Renderer2D_DrawLine(segment->v1, segment->v2, COLOR_DARK_GRAY);
         } else {
-            Renderer2D_DrawLine(segment->v1 * 32.0f, segment->v2 * 32.0f, color);
+            Renderer2D_DrawLine(segment->v1, segment->v2, color);
         }
     }
 }
@@ -463,7 +463,9 @@ int main(int argc, char** argv)
 
     bool toggleTo3D = false;
     bool debugDraw = false;
-    bool editorMode = true   ;
+    bool editorMode = true;
+
+    Camera2D cam = CreateDefaultCamera2D(1280, 720);
 
     while (!Platform_WindowShouldClose())
     {
@@ -515,10 +517,12 @@ int main(int argc, char** argv)
 
                 Renderer_EndFrame();
 
-            } else {
-                Camera camera = Camera_CreateOrthographic(0.0f, (f32)Platform_GetWindowWidth(), (f32)Platform_GetWindowHeight(), 0.0f, -1.0f, 1.0f);
+            } else { 
+                f32 hw = cam.viewportSize.x * 0.5f;
+                f32 hh = cam.viewportSize.y * 0.5f;
+                Camera camera = Camera_CreateOrthographic(-hw, hw, hh, -hh, -1.0f, 1.0f);
                 glm::mat4 projection = Camera_GetProjectionMatrix(&camera);
-                glm::mat4 view = glm::mat4(1.0f);
+                glm::mat4 view = Camera2D_GetViewMatrix(&cam);
                 Renderer2D_BeginFrame(&projection, &view);
 
                 for (s32 i = 0; i < sectorCount; ++i) {
@@ -571,6 +575,15 @@ int main(int argc, char** argv)
 
                 UpdatePlayer(&player, deltaTime);
                 DrawPlayer(&player);
+
+
+                // Origin
+                glm::vec2 origin = glm::vec2(0.0f, 0.0f);
+                glm::vec2 xAxis = glm::vec2(5.0f, 0.0f);
+                glm::vec2 yAxis = glm::vec2(0.0f, 5.0f);
+
+                Renderer2D_DrawLine(origin, origin + xAxis, COLOR_RED);
+                Renderer2D_DrawLine(origin, origin + yAxis, COLOR_GREEN);
 
                 Renderer2D_EndFrame();
             }
