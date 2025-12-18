@@ -55,6 +55,14 @@ Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32
     return mesh;
 }
 
+void DestroyMesh(Mesh* mesh) {
+    RHI_DestroyVertexBuffer(mesh->vbo);
+    RHI_DestroyIndexBuffer(mesh->ibo);
+
+    mesh->indexCount = 0;
+    mesh->aabb = {};
+}
+
 void Renderer_Init(Arena* arena) {
     // Init framebuffer
     {

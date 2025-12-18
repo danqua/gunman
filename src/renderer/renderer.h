@@ -38,6 +38,7 @@ struct Light {
 };
 
 Mesh CreateMesh(const Vertex* vertices, u32 vertexCount, const u32* indices, u32 indexCount);
+void DestroyMesh(Mesh* mesh);
 
 void Renderer_Init(Arena* arena);
 void Renderer_Shutdown();

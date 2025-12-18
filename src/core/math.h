@@ -113,3 +113,14 @@ void Plane_CreateFromNormalAndPoint(Plane* plane, const glm::vec3& normal, const
 
 // Creates a plane from a normal and a distance from the origin.
 void Plane_CreateFromNormalAndDistance(Plane* plane, const glm::vec3& normal, f32 distance);
+
+
+
+// Projects a point onto a line defined by two points.
+glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 v1, glm::vec2 v2, bool clamp = false);
+
+// Returns the closest point on a line segment to a given point.
+glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2);
+
+// Returns true if a point is on the line segment.
+bool PointOnSegment(glm::vec2 p, glm::vec2 v1, glm::vec2 v2);

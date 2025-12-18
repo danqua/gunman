@@ -1,6 +1,8 @@
 #include "math.h"
 #include <algorithm>
 
+#define EPSILON 1e-6f
+
 f32 Lerp(f32 a, f32 b, f32 t)
 {
     return a + t * (b - a);
@@ -143,4 +145,36 @@ void Plane_CreateFromNormalAndDistance(Plane* plane, const glm::vec3& normal, f3
 {
     plane->normal = glm::normalize(normal);
     plane->d = distance;
+}
+
+
+glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd, bool clamp) {
+    glm::vec2 lineDir = lineEnd - lineStart;
+    glm::vec2 pointDir = point - lineStart;
+    f32 t = glm::dot(pointDir, lineDir) / glm::dot(lineDir, lineDir);
+    if (clamp) {
+        t = glm::clamp(t, 0.0f, 1.0f);
+    }
+    return lineStart + t * lineDir;
+}
+
+glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
+    glm::vec2 result = ProjectPointOnLine(point, v1, v2, true);
+    return result;
+}
+
+bool PointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
+    f32 cross = (point.y - v1.y) * (v2.x - v1.x) - (point.x - v1.x) * (v2.y - v1.y);
+    if (Abs(cross) > EPSILON) {
+        return false;
+    }
+    f32 dot = (point.x - v1.x) * (v2.x - v1.x) + (point.y - v1.y) * (v2.y - v1.y);
+    if (dot < 0) {
+        return false;
+    }
+    f32 squaredLength = (v2.x - v1.x) * (v2.x - v1.x) + (v2.y - v1.y) * (v2.y - v1.y);
+    if (dot > squaredLength) {
+        return false;
+    }
+    return true;
 }

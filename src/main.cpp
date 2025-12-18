@@ -110,133 +110,64 @@ bool IntersectRayCircle(glm::vec2 rayOrigin, glm::vec2 rayDir, glm::vec2 center,
     return true;
 }
 
-glm::vec2 ProjectPointOnLine(glm::vec2 point, glm::vec2 lineStart, glm::vec2 lineEnd) {
-    glm::vec2 lineDir = lineEnd - lineStart;
-    glm::vec2 pointDir = point - lineStart;
-    f32 t = glm::dot(pointDir, lineDir) / glm::dot(lineDir, lineDir);
-    t = glm::clamp(t, 0.0f, 1.0f);
-    return lineStart + t * lineDir;
-}
-
-glm::vec2 ClosestPointOnSegment(glm::vec2 point, glm::vec2 v1, glm::vec2 v2) {
-    glm::vec2 result = ProjectPointOnLine(point, v1, v2);
-    return result;
-}
-
 LineSegment segments[] = {
-    { {  1, 1 }, {  4, 1 }, 0, -1, 0 }, // 0
-    { {  4, 1 }, {  6, 3 }, 0, -1, 0 }, // 1
-    { {  6, 3 }, {  6, 5 }, 0,  1, 0 }, // 2
-    { {  6, 5 }, {  1, 5 }, 0, -1, 0 }, // 3
-    { {  1, 5 }, {  1, 1 }, 0, -1, 0 }, // 4
-    { {  6, 3 }, {  8, 3 }, 1, -1, 0 }, // 5
-    { {  8, 3 }, {  8, 5 }, 1,  2, 0 }, // 6
-    { {  8, 5 }, {  6, 5 }, 1, -1, 0 }, // 7
-    { {  8, 3 }, {  8, 1 }, 2, -1, 0 }, // 8
-    { {  8, 1 }, { 11, 1 }, 2, -1, 0 }, // 9
-    { { 11, 1 }, { 11, 3 }, 2,  3, 0 }, // 10
-    { { 11, 3 }, { 11, 5 }, 2, -1, 0 }, // 11
-    { { 11, 5 }, {  8, 5 }, 2, -1, 0 }, // 12
-    { { 11, 1 }, { 13, 1 }, 3, -1, 0 }, // 13
-    { { 13, 1 }, { 13, 3 }, 3,  4, 0 }, // 14
-    { { 13, 3 }, { 11, 3 }, 3, -1, 0 }, // 15
-
-    // sec[4]
-    { { 13, 1 }, { 14, 1 }, 4, -1, 0 }, // 16
-    { { 14, 1 }, { 14, 4 }, 4,  5, 0 }, // 17
-    { { 14, 4 }, { 14, 6 }, 4,  6, 0 }, // 18
-    { { 14, 6 }, { 14, 7 }, 4,  8, 0 }, // 19
-    { { 14, 7 }, { 13, 7 }, 4, -1, 0 }, // 20
-    { { 13, 7 }, { 13, 3 }, 4, -1, 0 }, // 21
-
-    // sec[5]
-    { { 14, 1 }, { 18, 1 }, 5, -1, 0 }, // 22
-    { { 18, 1 }, { 18, 4 }, 5, -1, 0 }, // 23
-    { { 18, 4 }, { 17, 4 }, 5,  7, 0 }, // 24
-    { { 17, 4 }, { 14, 4 }, 5,  6, 0 }, // 25
-    // 14, 1 <- 14, 4
-
-    // sec[6]
-    { { 17, 4 }, { 17, 6 },  6,  7, 0 }, // 26
-    { { 17, 6 }, { 14, 6 },  6,  8, 0 }, // 27
-    // 14, 4 <- 14, 6
-    
-    // sec[7]
-    { { 18, 4 }, { 18, 7 }, 7, -1, 0 }, // 28
-    { { 18, 7 }, { 17, 7 }, 7, -1, 0 }, // 29
-    { { 17, 7 }, { 17, 6 }, 7,  8, 0 }, // 30
-    // 17, 4 <- 17, 6
-
-    // sec[8]
-    { { 17, 7 }, { 14, 7 }, 8, -1, 0 }, // 31
-    // 14, 6 <- 14, 7
+        { { 22, 11 }, { 27, 11 }, 0, -1, 0 },
+        { { 32, 11 }, { 26, 18 }, 0, -1, 0 },
+        { { 26, 18 }, { 22, 11 }, 0, -1, 0 },
+        { { 33, 10 }, { 35, 11 }, 1, 4, 0 },
+        { { 35, 11 }, { 35, 17 }, 1, -1, 0 },
+        { { 35, 17 }, { 32, 20 }, 1, -1, 0 },
+        { { 32, 20 }, { 30, 16 }, 1, -1, 0 },
+        { { 30, 16 }, { 33, 10 }, 1, -1, 0 },
+        { { 27, 11 }, { 30, 11 }, 0, 2, 0 },
+        { { 30, 11 }, { 32, 11 }, 0, -1, 0 },
+        { { 27, 11 }, { 27, 5 }, 2, -1, 0 },
+        { { 27, 5 }, { 30, 5 }, 2, -1, 0 },
+        { { 30, 5 }, { 30, 8 }, 2, 3, 0 },
+        { { 30, 8 }, { 30, 11 }, 2, -1, 0 },
+        { { 30, 5 }, { 39, 5 }, 3, -1, 0 },
+        { { 39, 5 }, { 39, 8 }, 3, -1, 0 },
+        { { 39, 8 }, { 37, 8 }, 3, -1, 0 },
+        { { 34, 8 }, { 30, 8 }, 3, -1, 0 },
+        { { 37, 8 }, { 34, 8 }, 3, 4, 0 },
+        { { 33, 10 }, { 34, 8 }, 4, -1, 0 },
+        { { 37, 8 }, { 35, 11 }, 4, -1, 0 },
 };
-
 Edge edges[] = {
-    {  0, false },
-    {  1, false },
-    {  2, false },
-    {  3, false },
-    {  4, false },
-    {  2, true  },
-    {  5, false },
-    {  6, false },
-    {  7, false },
-    {  8, false },
-    {  9, false },
-    { 10, false },
-    { 11, false },
-    { 12, false },
-    {  6, true  },
-    { 13, false },
-    { 14, false },
-    { 15, false },
-    { 10, true  },
-
-    { 16, false },
-    { 17, false },
-    { 18, false },
-    { 19, false },
-    { 20, false },
-    { 21, false },
-    { 14, true  },
-
-    { 22, false },
-    { 23, false },
-    { 24, false },
-    { 25, false },
-    { 17, true  },
-
-    { 25, true  },
-    { 26, false },
-    { 27, false },
-    { 18, true  },
-
-    { 28, false },
-    { 29, false },
-    { 30, false },
-    { 26, true  },
-    { 24, true  },
-
-    { 27, true  },
-    { 30, true  },
-    { 31, false },
-    { 19, true  }
+        { 0, false },
+        { 8, false },
+        { 9, false },
+        { 1, false },
+        { 2, false },
+        { 3, false },
+        { 4, false },
+        { 5, false },
+        { 6, false },
+        { 7, false },
+        { 10, false },
+        { 11, false },
+        { 12, false },
+        { 13, false },
+        { 8, true },
+        { 14, false },
+        { 15, false },
+        { 16, false },
+        { 18, false },
+        { 17, false },
+        { 12, true },
+        { 19, false },
+        { 18, true },
+        { 20, false },
+        { 3, true },
 };
-
 Sector sectors[] = {
-    {  0, 5,  0, 3 }, // 0
-    {  5, 4,  1, 4 }, // 1
-    {  9, 6,  0, 3 }, // 2
-    { 15, 4, -1, 2 }, // 3
-    { 19, 7,  0, 4 }, // 4
-    { 26, 5,  0, 4 }, // 5
-    { 31, 4, 0.25f, 4 }, // 6
-    { 35, 5,  0, 4 }, // 7
-    { 40, 4 , 0, 4 }  // 8
+        { 0, 5, 0, 4 },
+        { 5, 5, 0, 4 },
+        { 10, 5, 0, 4 },
+        { 15, 6, 0, 4 },
+        { 21, 4, 0, 4 },
 };
-
-const u32 sectorCount = 9;
+const u32 sectorCount = 5;
 
 struct Player {
     glm::vec2 position;
@@ -261,9 +192,9 @@ void DrawSector(const Sector* sector, Color color) {
         const LineSegment* segment = &segments[edge->seg];
 
         if (segment->backSector != -1 || edge->reversed) {
-            Renderer2D_DrawLine(segment->v1, segment->v2, COLOR_DARK_GRAY);
+            Renderer2D_DrawLine(segment->v1 * 32.0f, segment->v2 * 32.0f, COLOR_DARK_GRAY);
         } else {
-            Renderer2D_DrawLine(segment->v1, segment->v2, color);
+            Renderer2D_DrawLine(segment->v1 * 32.0f, segment->v2 * 32.0f, color);
         }
     }
 }
@@ -462,6 +393,8 @@ int main(int argc, char** argv)
     Platform_InitWindow("Gunman", 1920, 1080);
     //Platform_PlayAudioClip(audio, true);
 
+    Input_Init();
+
     void* memory = Platform_Alloc(Megabytes(12));
     Platform_Assert(memory, "Failed to allocate memory.");
 
@@ -495,6 +428,7 @@ int main(int argc, char** argv)
     AABB box = {};
     box.min = glm::vec2(4.0f, 2.0f);
     box.max = glm::vec2(5.0f, 3.0f);
+
 
     Mesh sectorMeshes[sectorCount];
     for (s32 i = 0; i < sectorCount; ++i) {
@@ -533,15 +467,11 @@ int main(int argc, char** argv)
 
     while (!Platform_WindowShouldClose())
     {
+        Input_NextFrame();
         Platform_PollEvents();
         Audio_Update();
 
         Arena_Clear(&transientStorage);
-
-        if (IsKeyPressed(Key_Escape))
-        {
-            Platform_CloseWindow();
-        }
 
         if (IsKeyPressed(Key_F3)) {
             editorMode = !editorMode;
@@ -586,7 +516,10 @@ int main(int argc, char** argv)
                 Renderer_EndFrame();
 
             } else {
-                Renderer2D_BeginFrame();
+                Camera camera = Camera_CreateOrthographic(0.0f, (f32)Platform_GetWindowWidth(), (f32)Platform_GetWindowHeight(), 0.0f, -1.0f, 1.0f);
+                glm::mat4 projection = Camera_GetProjectionMatrix(&camera);
+                glm::mat4 view = glm::mat4(1.0f);
+                Renderer2D_BeginFrame(&projection, &view);
 
                 for (s32 i = 0; i < sectorCount; ++i) {
                     DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
@@ -643,7 +576,6 @@ int main(int argc, char** argv)
             }
         }
         Platform_SwapBuffers();
-        Input_NextFrame();
     }
 
     RHI_Shutdown();

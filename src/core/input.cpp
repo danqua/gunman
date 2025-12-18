@@ -15,6 +15,11 @@ void Input_Init() {
         currentKeys[i] = false;
         previousKeys[i] = false;
     }
+    
+    for (u32 i = 0; i < MouseButton_Count; ++i) {
+        currentMouseButtons[i] = false;
+        previousMouseButtons[i] = false;
+    }
 }
 
 void Input_Shutdown() {
@@ -49,7 +54,6 @@ void Input_ProcessMouseButtonEvent(MouseButton button, bool down) {
 void Input_ProcessMouseMoveEvent(f32 x, f32 y, f32 xrel, f32 yrel) {
     mousePosition.x = x;
     mousePosition.y = y;
-
     relativeMousePosition.x = xrel;
     relativeMousePosition.y = yrel;
 }

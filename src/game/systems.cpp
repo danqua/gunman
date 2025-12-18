@@ -261,8 +261,8 @@ void RenderSystem(Entity** entities, u32 entityCount)
 
     //DrawPlayer(game->context, game->context->player);
 
+    /*
     Renderer_EndFrame();
-
     Renderer2D_BeginFrame();
 
     f32 windowCenterX = (f32)Platform_GetWindowWidth() / 2.0f;
@@ -273,6 +273,6 @@ void RenderSystem(Entity** entities, u32 entityCount)
     glm::vec2 size = glm::vec2(spriteWidth, spriteHeight);
 
     Renderer2D_DrawRect(position, size, COLOR_WHITE);
-
     Renderer2D_EndFrame();
+    */
 }

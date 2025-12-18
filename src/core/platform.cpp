@@ -202,8 +202,8 @@ void Platform_PollEvents()
     {
         switch (event.type)
         {
-        case SDL_EVENT_QUIT:
-            windowShouldClose = true;
+            case SDL_EVENT_QUIT:
+                windowShouldClose = true;
             break;
             
             case SDL_EVENT_KEY_DOWN: {
@@ -224,7 +224,7 @@ void Platform_PollEvents()
 
             case SDL_EVENT_MOUSE_WHEEL: {
                 Input_ProcessMouseWheelEvent((f32)event.wheel.y);
-            }
+            } break;
 
             case SDL_EVENT_MOUSE_MOTION: {
                 Input_ProcessMouseMoveEvent(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);

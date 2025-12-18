@@ -1,5 +1,6 @@
 #pragma once
 #include "core/types.h"
+#include <vector>
 
 struct LineSegment {
     glm::vec2 v1;
@@ -12,6 +13,10 @@ struct LineSegment {
 struct Edge {
     s32 seg;
     bool reversed;
+
+    bool operator==(const Edge& other) const {
+        return (seg == other.seg) && (reversed == other.reversed);
+    }
 };
 
 struct Sector {
