@@ -388,6 +388,8 @@ Mesh CreateSectorMesh(const Sector* sector) {
     return mesh;
 }
 
+#include "earcut.h"
+
 int main(int argc, char** argv)
 {
     Platform_InitWindow("Gunman", 1920, 1080);
@@ -463,9 +465,38 @@ int main(int argc, char** argv)
 
     bool toggleTo3D = false;
     bool debugDraw = false;
-    bool editorMode = true;
+    bool editorMode = false;
 
     Camera2D cam = CreateDefaultCamera2D(1280, 720);
+
+    std::vector<glm::dvec2> vertices = {
+        {  0.0, 0.0 },
+        { 10.0, 0.0 },
+        { 10.0, 8.0 },
+        {  0.0, 8.0 },
+    };
+
+    std::vector<std::vector<glm::dvec2>> holes = {
+        {
+            { 3.0, 2.0 },
+            { 7.0, 2.0 },
+            { 7.0, 6.0 },
+            { 3.0, 6.0 }
+        }
+    };
+
+    Triangulation2D triangulation = EarclipWithHoles(vertices, holes);
+
+    std::vector<Vertex> triVertices;
+
+    for (const glm::dvec2& v : triangulation.vertices) {
+        Vertex vert = {};
+        vert.position = glm::vec3((f32)v.x, 0.0f, (f32)v.y);
+        vert.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+        triVertices.push_back(vert);
+    }
+
+    Mesh floorMesh = CreateMesh(triVertices.data(), (u32)triVertices.size(), triangulation.indices.data(), (u32)triangulation.indices.size());
 
     while (!Platform_WindowShouldClose())
     {
@@ -514,6 +545,8 @@ int main(int argc, char** argv)
                         Renderer_DrawBox(mesh->aabb.min, mesh->aabb.max, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
                     }
                 }
+
+                Renderer_DrawMesh(&floorMesh, &sectorMaterial, glm::mat4(1.0f));
 
                 Renderer_EndFrame();
 
@@ -584,6 +617,7 @@ int main(int argc, char** argv)
 
                 Renderer2D_DrawLine(origin, origin + xAxis, COLOR_RED);
                 Renderer2D_DrawLine(origin, origin + yAxis, COLOR_GREEN);
+
 
                 Renderer2D_EndFrame();
             }

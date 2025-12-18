@@ -25,6 +25,12 @@ void DrawVertex(const Camera2D* camera, glm::vec2 position) {
     Renderer2D_DrawRect(position - glm::vec2(halfSize), glm::vec2(halfSize * 2), COLOR_WHITE);
 }
 
+void DrawClosestPointVertex(const Camera2D* camera, glm::vec2 pos) {
+    f32 halfLength = 5.0f;
+    Renderer2D_DrawLine(pos + glm::vec2(-halfLength, -halfLength), pos + glm::vec2(halfLength, halfLength), Color{ 255, 81, 14, 255 });
+    Renderer2D_DrawLine(pos + glm::vec2(-halfLength, halfLength), pos + glm::vec2(halfLength, -halfLength), Color{ 255, 81, 14, 255 });
+}
+
 void Editor_Init() {
     editorState.gridSize = 32;
     s32 windowWidth = Platform_GetWindowWidth();
@@ -101,7 +107,7 @@ void Editor_UpdateAndRender(f32 dt) {
     // Draw all sectors
     for (const auto& [sectorIndex, edges] : editorState.sectorEdgeMap) {
         for (const auto& edge : edges) {
-            const LineSegment& seg = editorState.segments[edge.seg];
+            const LineSegment& seg = editorState.vsegments[edge.seg];
             Renderer2D_DrawLine(seg.v1, seg.v2, seg.backSector != -1 ? COLOR_RED : COLOR_WHITE);
             DrawVertex(&editorState.camera, seg.v1);
             DrawVertex(&editorState.camera, seg.v2);
@@ -114,7 +120,7 @@ void Editor_UpdateAndRender(f32 dt) {
             if (IsKeyPressed(Key_P)) {
 
                 printf("LineSegment segments[] = {\n");
-                for (const LineSegment& segment : editorState.segments) {
+                for (const LineSegment& segment : editorState.vsegments) {
                     printf("\t{ { %d, %d }, { %d, %d }, %d, %d, %d },\n",
                         (s32)segment.v1.x / 32,
                         (s32)segment.v1.y / 32,
@@ -130,7 +136,7 @@ void Editor_UpdateAndRender(f32 dt) {
                 s32 segIndex = 0;
                 for (const auto& [sectorIndex, edges] : editorState.sectorEdgeMap) {
                     for (const auto& edge : edges) {
-                        const LineSegment& segment = editorState.segments[edge.seg];
+                        const LineSegment& segment = editorState.vsegments[edge.seg];
                         printf("\t{ %d, %s },\n", edge.seg, edge.reversed ? "true" : "false");
                     }
                 }
@@ -146,6 +152,42 @@ void Editor_UpdateAndRender(f32 dt) {
                 printf("};\n");
             }
 
+            {
+                // Find closest vertex to cursor
+                if (IsMouseButtonDown(MouseButton_Left)) {
+                    const f32 vertexSelectThreshold = 32.0f / editorState.camera.pixelsPerUnit;
+                    Camera2D* cam = &editorState.camera;
+                    glm::vec2 worldMousePos = Camera2D_ScreenToWorld(cam, GetMousePosition());
+                    for (LineSegment& segment : editorState.vsegments) {
+                        if (glm::distance(worldMousePos, segment.v1) < vertexSelectThreshold) {
+                            editorState.editMode.type = EditMode_DragVertex;
+                            editorState.editMode.activeSeg = &segment;
+                            editorState.editMode.firstVertex = true;
+                            break;
+                        } else if (glm::distance(worldMousePos, segment.v2) < vertexSelectThreshold) {
+                            editorState.editMode.type = EditMode_DragVertex;
+                            editorState.editMode.activeSeg = &segment;
+                            editorState.editMode.firstVertex = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (editorState.editMode.type == EditMode_DragVertex) {
+                    if (IsMouseButtonDown(MouseButton_Left)) {
+                        LineSegment* activeSeg = editorState.editMode.activeSeg;
+                        glm::vec2 worldMousePos = GetSnappedMousePosition(&editorState);
+                        if (editorState.editMode.firstVertex) {
+                            activeSeg->v1 = glm::vec2(worldMousePos);
+                        } else {
+                            activeSeg->v2 = glm::vec2(worldMousePos);
+                        }
+                    } else {
+                        editorState.editMode.type = EditMode_None;
+                    }
+                }
+            }
+
 
 
             if (IsKeyPressed(Key_Space)) {
@@ -155,87 +197,49 @@ void Editor_UpdateAndRender(f32 dt) {
 
             // Iterate through all sectors and draw a dummy vertex on the sectors edge
             glm::vec2 closestPoint;
+            Edge* closestEdge = nullptr;
             s32 closestPointSector = -1;
             f32 closestDistanceThreshold = 28.0f;
-            for (const auto& [sectorIndex, edges] : editorState.sectorEdgeMap) {
-                for (const auto& edge : edges) {
-                    LineSegment* segment = &editorState.segments[edge.seg];
+            for (auto& [sectorIndex, edges] : editorState.sectorEdgeMap) {
+                for (Edge& edge : edges) {
+                    LineSegment* segment = &editorState.vsegments[edge.seg];
                     glm::vec2 worldMousePos = Camera2D_ScreenToWorld(&editorState.camera, GetMousePosition());
                     closestPoint = ClosestPointOnSegment(worldMousePos, segment->v1, segment->v2);
                     if (glm::distance(closestPoint, worldMousePos) < closestDistanceThreshold) {
                         closestPointSector = sectorIndex;
+                        closestEdge = &edge;
                         goto here;
                     }
                 }
             }
-            here:
+        here:
             if (closestPointSector != -1) {
-                f32 halfLength = 5.0f;
-                Renderer2D_DrawLine(closestPoint + glm::vec2(-halfLength, -halfLength), closestPoint + glm::vec2(halfLength, halfLength), COLOR_ORANGE);
-                Renderer2D_DrawLine(closestPoint + glm::vec2(-halfLength, halfLength), closestPoint + glm::vec2(halfLength, -halfLength), COLOR_ORANGE);
-            }
-            /*
-            glm::vec2 closestPoint;
-            bool foundClosestPoint = false;
-            f32 closestPointDistThreshold = 28.0f;
-            u64 sector = -1;
-            Edge* closestEdge = nullptr;
-            for (const auto& [sectorIndex, edges] : editorState.sectorEdgeMap) {
-                for (const auto& edge : edges) {
-                    LineSegment* segment = &editorState.segments[edge.seg];
-                    closestPoint = ClosestPointOnSegment(editorState.mousePosition, segment->v1, segment->v2);
-                    f32 dist = glm::distance(closestPoint, editorState.mousePosition);
-                    if (dist < closestPointDistThreshold) {
-                        foundClosestPoint = true;
-                        sector = sectorIndex;
-                        closestEdge = (Edge*)&edge;
-                        break;
-                    } else {
-                        int wait = 0;
-                    }
-                }
-                if (foundClosestPoint) break;
-            }
-
-            if (foundClosestPoint) {
-                if (IsKeyPressed(Key_V)) {
-                    glm::ivec2 point = Editor_SnapToGrid(&editorState, closestPoint);
-                    LineSegment& segment = editorState.segments[closestEdge->seg];
-                    if (PointOnSegment(glm::vec2(point), segment.v1, segment.v2)) {
-                        printf("DONT ADD A VERTEX!\n");
-                    }
-                }
                 if (IsKeyPressed(Key_I)) {
-                    glm::ivec2 newVertex = Editor_SnapToGrid(&editorState, closestPoint);
-                    LineSegment& originalSegment = editorState.segments[closestEdge->seg];
+                    glm::ivec2 newVertex = SnapToGrid(&editorState, closestPoint);
+                    LineSegment& originalSegment = editorState.vsegments[closestEdge->seg];
                     LineSegment newSegment = originalSegment;
 
                     originalSegment.v2 = glm::vec2(newVertex);
                     newSegment.v1 = glm::vec2(newVertex);
 
-                    editorState.segments.push_back(newSegment);
+                    editorState.vsegments.push_back(newSegment);
 
                     Edge newEdge = *closestEdge;
-                    newEdge.seg = (s32)editorState.segments.size() - 1;
+                    newEdge.seg = (s32)editorState.vsegments.size() - 1;
 
                     auto it = std::find(
-                        editorState.sectorEdgeMap[sector].begin(),
-                        editorState.sectorEdgeMap[sector].end(),
+                        editorState.sectorEdgeMap[closestPointSector].begin(),
+                        editorState.sectorEdgeMap[closestPointSector].end(),
                         *closestEdge
                     );
-                    if (it != editorState.sectorEdgeMap[sector].end()) {
-                        editorState.sectorEdgeMap[sector].insert(it + 1, newEdge);
+                    if (it != editorState.sectorEdgeMap[closestPointSector].end()) {
+                        editorState.sectorEdgeMap[closestPointSector].insert(it + 1, newEdge);
                     }
-                    int wait= 0;
+                    int wait = 0;
                 }
-                
 
-
-                f32 halfLength = 5.0f;
-                Renderer2D_DrawLine(closestPoint + glm::vec2(-halfLength,-halfLength), closestPoint + glm::vec2(halfLength,  halfLength), COLOR_ORANGE);
-                Renderer2D_DrawLine(closestPoint + glm::vec2(-halfLength, halfLength), closestPoint + glm::vec2(halfLength, -halfLength), COLOR_ORANGE);
+                DrawClosestPointVertex(camera, closestPoint);
             }
-            */
         } break;
 
         case EditorDrawMode_Sector: {
@@ -247,6 +251,10 @@ void Editor_UpdateAndRender(f32 dt) {
 
             DrawModeSector_Update(&editorState, dt);
             DrawModeSector_Render(&editorState);
+        } break;
+
+        case EditorDrawMode_MoveVertex: {
+            
         } break;
     }
 

@@ -24,13 +24,13 @@ void DrawModeSector_Update(EditorState* state, f32 dt) {
                 glm::ivec2 p1 = state->points[i];
                 glm::ivec2 p2 = state->points[(i + 1) % state->points.size()];
 
-                u64 segmentIndex = state->segments.size();
+                u64 segmentIndex = state->vsegments.size();
 
                 // Check if there is already a segment between p1 and p2 (reversed)
                 bool segmentExists = false;
                 for (const auto& [sectorIndex, edges] : state->sectorEdgeMap) {
                     for (const auto& edge : edges) {
-                        LineSegment& seg = state->segments[edge.seg];
+                        LineSegment& seg = state->vsegments[edge.seg];
                         if (seg.v1 == glm::vec2(p2) && seg.v2 == glm::vec2(p1)) {
                             segmentExists = true;
 
@@ -53,7 +53,7 @@ void DrawModeSector_Update(EditorState* state, f32 dt) {
                     segment.v2 = glm::vec2(p2);
                     segment.frontSector = state->sectorCount;
                     segment.backSector = -1;
-                    state->segments.push_back(segment);
+                    state->vsegments.push_back(segment);
                 
                     Edge edge = {};
                     edge.seg = segmentIndex;
