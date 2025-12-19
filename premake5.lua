@@ -29,6 +29,7 @@ project "Gunman"
 		"extern/SDL3-3.2.8/include",
         "extern/glad-3.3/include",
         "extern/glm-1.0.1-light",
+        "extern/earcut.hpp-master/include",
         "extern/stb-master"
     }
     

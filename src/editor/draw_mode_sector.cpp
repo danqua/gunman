@@ -65,8 +65,8 @@ void DrawModeSector_Update(EditorState* state, f32 dt) {
 
             Sector& sector = state->sectors[state->sectorCount++];
             sector = {};
-            sector.floorHeight = 0.0f;
-            sector.ceilingHeight = 128.0f;
+            //sector.floorHeight = 0.0f;
+            //sector.ceilingHeight = 128.0f;
 
             state->points.clear();
 

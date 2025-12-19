@@ -7,7 +7,6 @@ struct LineSegment {
     glm::vec2 v2;
     s32 frontSector;
     s32 backSector;
-    u32 flags;
 };
 
 struct Edge {
@@ -19,9 +18,14 @@ struct Edge {
     }
 };
 
-struct Sector {
+struct SectorGroup {
     s32 firstEdge;
     s32 edgeCount;
+};
+
+struct Sector {
+    s32 firstGroup;
+    s32 groupCount;
     f32 floorHeight;
     f32 ceilingHeight;
 };

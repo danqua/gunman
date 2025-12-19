@@ -17,6 +17,7 @@
 #include "scene/transform.h"
 
 #include "game/map.h"
+#include <mapbox/earcut.hpp>
 
 struct AABB {
     glm::vec2 min;
@@ -111,63 +112,130 @@ bool IntersectRayCircle(glm::vec2 rayOrigin, glm::vec2 rayDir, glm::vec2 center,
 }
 
 LineSegment segments[] = {
-        { { 22, 11 }, { 27, 11 }, 0, -1, 0 },
-        { { 32, 11 }, { 26, 18 }, 0, -1, 0 },
-        { { 26, 18 }, { 22, 11 }, 0, -1, 0 },
-        { { 33, 10 }, { 35, 11 }, 1, 4, 0 },
-        { { 35, 11 }, { 35, 17 }, 1, -1, 0 },
-        { { 35, 17 }, { 32, 20 }, 1, -1, 0 },
-        { { 32, 20 }, { 30, 16 }, 1, -1, 0 },
-        { { 30, 16 }, { 33, 10 }, 1, -1, 0 },
-        { { 27, 11 }, { 30, 11 }, 0, 2, 0 },
-        { { 30, 11 }, { 32, 11 }, 0, -1, 0 },
-        { { 27, 11 }, { 27, 5 }, 2, -1, 0 },
-        { { 27, 5 }, { 30, 5 }, 2, -1, 0 },
-        { { 30, 5 }, { 30, 8 }, 2, 3, 0 },
-        { { 30, 8 }, { 30, 11 }, 2, -1, 0 },
-        { { 30, 5 }, { 39, 5 }, 3, -1, 0 },
-        { { 39, 5 }, { 39, 8 }, 3, -1, 0 },
-        { { 39, 8 }, { 37, 8 }, 3, -1, 0 },
-        { { 34, 8 }, { 30, 8 }, 3, -1, 0 },
-        { { 37, 8 }, { 34, 8 }, 3, 4, 0 },
-        { { 33, 10 }, { 34, 8 }, 4, -1, 0 },
-        { { 37, 8 }, { 35, 11 }, 4, -1, 0 },
+    // Sector
+    { { 1, 1 }, { 8, 1 }, 0, -1 }, // 0
+    { { 8, 1 }, { 8, 6 }, 0, -1 }, // 1
+    { { 8, 6 }, { 6, 6 }, 0,  3 }, // 2
+    { { 6, 6 }, { 1, 6 }, 0, -1 }, // 3
+    { { 1, 6 }, { 1, 1 }, 0, -1 }, // 4
+    
+    // Subsector
+    { { 6, 2 }, { 7, 2 }, 1, 0 }, // 5
+    { { 7, 2 }, { 7, 3 }, 1, 0 }, // 6
+    { { 7, 3 }, { 6, 3 }, 1, 0 }, // 7
+    { { 6, 3 }, { 6, 2 }, 1, 0 }, // 8
+
+    // Subsector
+    { { 2, 4 }, { 3, 4 }, 2, 0 }, // 9
+    { { 3, 4 }, { 3, 5 }, 2, 0 }, // 10
+    { { 3, 5 }, { 2, 5 }, 2, 0 }, // 11
+    { { 2, 5 }, { 2, 4 }, 2, 0 }, // 12
+
+    // Sector
+    { { 8,  6 }, { 8, 10 }, 3,  4 }, // 13
+    { { 8, 10 }, { 6, 10 }, 3, -1 }, // 14
+    { { 6, 10 }, { 6,  6 }, 3, -1 }, // 15
+    // seg: 2
+
+    // Sector
+    { {  8,  6 }, { 12,  6 }, 4, -1 },  // 16
+    { { 12,  6 }, { 12, 10 }, 4, -1 },  // 17
+    { { 12, 10 }, {  8, 10 }, 4, -1 },  // 18
+    // seg: 13
+
+    // Subsector
+    { {  9, 7 }, { 11, 7 }, 5, 4 },  // 19
+    { { 11, 7 }, { 11, 9 }, 5, 4 },  // 20
+    { { 11, 9 }, {  9, 9 }, 5, 4 },  // 21
+    { {  9, 9 }, {  9, 7 }, 5, 4 },  // 22
+
+    // Subsubsector
+    { {  9.5, 7.5 }, { 10.5, 7.5 }, 6, 5 }, // 23
+    { { 10.5, 7.5 }, { 10.5, 8.5 }, 6, 5 }, // 24
+    { { 10.5, 8.5 }, {  9.5, 8.5 }, 6, 5 }, // 25
+    { {  9.5, 8.5 }, {  9.5, 7.5 }, 6, 5 }, // 26
 };
+
 Edge edges[] = {
-        { 0, false },
-        { 8, false },
-        { 9, false },
-        { 1, false },
-        { 2, false },
-        { 3, false },
-        { 4, false },
-        { 5, false },
-        { 6, false },
-        { 7, false },
-        { 10, false },
-        { 11, false },
-        { 12, false },
-        { 13, false },
-        { 8, true },
-        { 14, false },
-        { 15, false },
-        { 16, false },
-        { 18, false },
-        { 17, false },
-        { 12, true },
-        { 19, false },
-        { 18, true },
-        { 20, false },
-        { 3, true },
+    { 0, false },
+    { 1, false },
+    { 2, false },
+    { 3, false },
+    { 4, false },
+
+    { 5, false },
+    { 6, false },
+    { 7, false },
+    { 8, false },
+    
+    {  9, false },
+    { 10, false },
+    { 11, false },
+    { 12, false },
+
+    { 13, false },
+    { 14, false },
+    { 15, false },
+    { 2, true },
+    
+    { 16, false },
+    { 17, false },
+    { 18, false },
+    { 13, true },
+    
+    { 19, false },
+    { 20, false },
+    { 21, false },
+    { 22, false },
+
+    { 23, false },
+    { 24, false },
+    { 25, false },
+    { 26, false },
 };
+
+static SectorGroup secGroups[] = {
+    // Sector
+    {  0, 5 },
+    {  5, 4 },
+    {  9, 4 },
+
+    // Subsector
+    { 5, 4 },
+
+    // Subsector
+    { 9, 4 },
+
+    // Sector
+    { 13, 4 },
+
+    // Sector
+    { 17, 4 },
+    { 21, 4 },
+
+    // Sector
+    { 21, 4 },
+    { 25, 4 },
+
+    // Subsector
+    { 25, 4 }
+};
+
 Sector sectors[] = {
-        { 0, 5, 0, 4 },
-        { 5, 5, 0, 4 },
-        { 10, 5, 0, 4 },
-        { 15, 6, 0, 4 },
-        { 21, 4, 0, 4 },
+    { 0, 3, 0, 4 },
+    { 3, 1, 1, 4 },
+    { 4, 1, 2, 4 },
+    { 5, 1, -0.2, 3 },
+    { 6, 2,  0.4, 4 },
+    { 8, 2,  0, 4 },
+    { 10, 1, -0.2, 4 },
 };
-const u32 sectorCount = 5;
+const u32 sectorCount = sizeof(sectors) / sizeof(Sector);
+
+glm::vec2 LineSegment_GetNormal(const LineSegment* segment) {
+    glm::vec2 dir = segment->v2 - segment->v1;
+    return glm::normalize(glm::vec2(-dir.y, dir.x));
+}
 
 struct Player {
     glm::vec2 position;
@@ -186,15 +254,27 @@ bool IsPortal(LineSegment* segment) {
     return (segment->backSector != -1);
 }
 
-void DrawSector(const Sector* sector, Color color) {
-    for (s32 i = 0; i < sector->edgeCount; ++i) {
-        const Edge* edge = &edges[sector->firstEdge + i];
-        const LineSegment* segment = &segments[edge->seg];
+void DrawSector(const Sector* sector) {
+    for (s32 groupIdx = 0; groupIdx < sector->groupCount; ++groupIdx) {
+        const SectorGroup* group = &secGroups[sector->firstGroup + groupIdx];
+        for (s32 edgeIdx = 0; edgeIdx < group->edgeCount; ++edgeIdx) {
+            const Edge* edge = &edges[group->firstEdge + edgeIdx];
+            if (edge->reversed) {
+                continue;
+            }
+            
+            const LineSegment* seg = &segments[edge->seg];
+            glm::vec2 normal = LineSegment_GetNormal(seg);
+            glm::vec2 midPoint = (seg->v1 + seg->v2) * 0.5f;
+            const f32 normalSize = 0.2f;
 
-        if (segment->backSector != -1 || edge->reversed) {
-            Renderer2D_DrawLine(segment->v1, segment->v2, COLOR_DARK_GRAY);
-        } else {
-            Renderer2D_DrawLine(segment->v1, segment->v2, color);
+            if (seg->backSector != -1) {
+                Renderer2D_DrawLine(seg->v1, seg->v2, COLOR_DARK_GRAY);
+                Renderer2D_DrawLine(midPoint, midPoint + normal * normalSize, COLOR_DARK_GRAY);
+            } else {
+                Renderer2D_DrawLine(seg->v1, seg->v2, COLOR_WHITE);
+                Renderer2D_DrawLine(midPoint, midPoint + normal * normalSize, COLOR_WHITE);
+            }
         }
     }
 }
@@ -223,7 +303,7 @@ void UpdatePlayer(Player* player, f32 dt) {
     if (IsKeyDown(Key_Down)) {
         player->position -= forward * movementSpeed * dt;
     }
-
+    /*
     const Sector* sector = &sectors[player->currentSector];
     for (s32 i = 0; i < sector->edgeCount; ++i) {
         const Edge* edge = &edges[sector->firstEdge + i];
@@ -250,6 +330,7 @@ void UpdatePlayer(Player* player, f32 dt) {
             player->position += penetrationVector;
         }
     }
+    */
 }
 
 void DrawPlayer(const Player* player) {
@@ -258,7 +339,7 @@ void DrawPlayer(const Player* player) {
     Renderer2D_DrawRect(player->position - glm::vec2(player->radius), glm::vec2(player->radius * 2), COLOR_YELLOW);
 }
 
-void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, DynamicArray<Vertex>& vertices, DynamicArray<u32>& indices) {
+void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, std::vector<Vertex>& vertices, std::vector<u32>& indices) {
 
     glm::vec3 verts[4] = {
         glm::vec3(v1.x, floorHeight, v1.y),
@@ -268,127 +349,112 @@ void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, Dyn
     };
     glm::vec3 normal = glm::normalize(glm::vec3(v2.y - v1.y, 0.0f, v1.x - v2.x));
 
-    u32 baseIndex = vertices.size;
+    u32 baseIndex = vertices.size();
 
     for (s32 i = 0; i < 4; ++i) {
         Vertex vert;
         vert.position = verts[i];
         vert.normal = normal;
-        vertices.Add(vert);
+        vertices.push_back(vert);
     }
 
-    indices.Add(baseIndex + 0);
-    indices.Add(baseIndex + 1);
-    indices.Add(baseIndex + 2);
-    indices.Add(baseIndex + 2);
-    indices.Add(baseIndex + 3);
-    indices.Add(baseIndex + 0);
+    indices.push_back(baseIndex + 0);
+    indices.push_back(baseIndex + 1);
+    indices.push_back(baseIndex + 2);
+    indices.push_back(baseIndex + 2);
+    indices.push_back(baseIndex + 3);
+    indices.push_back(baseIndex + 0);
 }
 
-void CreateFloorAndCeiling(const Sector* sector, DynamicArray<Vertex>& vertices, DynamicArray<u32>& indices) {
+std::array<Mesh, 2> CreateFloorAndCeiling(const Sector* sector) {
+    std::vector<std::array<double, 2>> vertices;
+    std::vector<std::vector<std::array<double, 2>>> polygon;
 
+    const SectorGroup* outerSector = &secGroups[sector->firstGroup];
+    for (s32 edgeIdx = 0; edgeIdx < outerSector->edgeCount; ++edgeIdx) {
+        const Edge* edge = &edges[outerSector->firstEdge + edgeIdx];
+        const LineSegment* seg = &segments[edge->seg];
+        if (!edge->reversed) {
+            vertices.push_back({ seg->v1.x, seg->v1.y });
+        }
+        else {
+            vertices.push_back({ seg->v2.x, seg->v2.y });
+        }
+    }
+    polygon.push_back(vertices);
+
+    for (s32 groupIdx = 1; groupIdx < sector->groupCount; ++groupIdx) {
+        const SectorGroup* group = &secGroups[sector->firstGroup + groupIdx];
+        std::vector<std::array<double, 2>> holes;
+        for (s32 edgeIdx = 0; edgeIdx < group->edgeCount; ++edgeIdx) {
+            const Edge* edge = &edges[group->firstEdge + edgeIdx];
+            const LineSegment* seg = &segments[edge->seg];
+            if (!edge->reversed) {
+                holes.push_back({ seg->v1.x, seg->v1.y });
+            }
+            else {
+                holes.push_back({ seg->v2.x, seg->v2.y });
+            }
+        }
+        polygon.push_back(holes);
+    }
+
+    std::vector<u32> indices = mapbox::earcut<u32>(polygon);
+
+    std::vector<Vertex> triVertices;
+    for (auto pol : polygon) {
+        for (auto vertex : pol) {
+            Vertex v = {};
+            v.position = glm::vec3(vertex[0], sector->ceilingHeight, vertex[1]);
+            v.normal = glm::vec3(0.0f, -1.0f, 0.0f);
+            triVertices.push_back(v);
+        }
+    }
+
+    std::array<Mesh, 2> meshes;
+    meshes[1] = CreateMesh(triVertices.data(), (u32)triVertices.size(), indices.data(), (u32)indices.size());
+
+    for (auto& v : triVertices) {
+        v.position.y = sector->floorHeight;
+        v.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+    std::reverse(indices.begin(), indices.end());
+    meshes[0] = CreateMesh(triVertices.data(), (u32)triVertices.size(), indices.data(), (u32)indices.size());
+    return meshes;
 }
 
 Mesh CreateSectorMesh(const Sector* sector) {
-    DynamicArray<Vertex> vertices;
-    DynamicArray<u32> indices;
+    std::vector<Vertex> vertices;
+    std::vector<u32> indices;
+    for (s32 groupIdx = 0; groupIdx < sector->groupCount; ++groupIdx) {
+        const SectorGroup* group = &secGroups[sector->firstGroup + groupIdx];
+        for (s32 edgeIdx = 0; edgeIdx < group->edgeCount; ++edgeIdx) {
+            const Edge* edge = &edges[group->firstEdge + edgeIdx];
+            const LineSegment* segment = &segments[edge->seg];
+            if (segment->backSector != -1) {
+                Sector* backSector = &sectors[segment->backSector];
 
-
-    for (s32 i = 0; i < sector->edgeCount; ++i) {
-        const Edge* edge = &edges[sector->firstEdge + i];
-        const LineSegment* segment = &segments[edge->seg];
-
-        glm::vec2 segDir = segment->v2 - segment->v1;
-        segDir = glm::normalize(glm::vec2(-segDir.y, segDir.x));
-        
-        // Create portal walls for adjacend sectors with different floor/ceiling heights
-        if (segment->backSector != -1) {
-            u32 sectorIndex = edge->reversed ? segment->frontSector : segment->backSector;
-            const Sector* adjacentSector = &sectors[sectorIndex];
-
-            if (adjacentSector->floorHeight > sector->floorHeight) {
-                if (edge->reversed) {
-                    CreateWall(segment->v2, segment->v1, sector->floorHeight, adjacentSector->floorHeight, vertices, indices);
-                } else {
-                    CreateWall(segment->v1, segment->v2, sector->floorHeight, adjacentSector->floorHeight, vertices, indices);
+                if (backSector->floorHeight > sector->floorHeight) {
+                    CreateWall(segment->v1, segment->v2, sector->floorHeight, backSector->floorHeight, vertices, indices);
+                } else if (backSector->floorHeight < sector->floorHeight) {
+                    CreateWall(segment->v2, segment->v1, backSector->floorHeight, sector->floorHeight, vertices, indices);
                 }
+
+                if (backSector->ceilingHeight < sector->ceilingHeight) {
+                    CreateWall(segment->v1, segment->v2, backSector->ceilingHeight, sector->ceilingHeight, vertices, indices);
+                } else if (backSector->ceilingHeight > sector->ceilingHeight) {
+                    CreateWall(segment->v2, segment->v1, sector->ceilingHeight, backSector->ceilingHeight, vertices, indices);
+                }
+                continue;
             }
 
-            if (adjacentSector->ceilingHeight < sector->ceilingHeight) {
-                if (edge->reversed) {
-                    CreateWall(segment->v1, segment->v2, sector->ceilingHeight, adjacentSector->ceilingHeight, vertices, indices);
-                } else {
-                    CreateWall(segment->v2, segment->v1, sector->ceilingHeight, adjacentSector->ceilingHeight, vertices, indices);
-                }
-            }            
-            continue;
+            CreateWall(segment->v1, segment->v2, sector->floorHeight, sector->ceilingHeight, vertices, indices);
         }
-
-        CreateWall(segment->v1, segment->v2, sector->floorHeight, sector->ceilingHeight, vertices, indices);
     }
 
-    
-    for (s32 i = 0; i < sector->edgeCount; ++i) {
-        const Edge* edge = &edges[sector->firstEdge + i];
-        const LineSegment* segment = &segments[edge->seg];
-
-        if (segment->backSector != -1) {
-            continue;
-        }
-
-        
-    }
-
-    // Create ceiling vertices
-    s32 baseIndex = vertices.size;
-    for (s32 i = 0; i < sector->edgeCount; ++i) {
-        const Edge* edge = &edges[sector->firstEdge + i];
-        const LineSegment* segment = &segments[edge->seg];
-
-        Vertex vertex = {};
-        if (edge->reversed) {
-            vertex.position = glm::vec3(segment->v2.x, sector->ceilingHeight, segment->v2.y);
-        } else {
-            vertex.position = glm::vec3(segment->v1.x, sector->ceilingHeight, segment->v1.y);
-        }
-        vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
-        vertices.Add(vertex);
-    }
-
-    for (s32 i = 0; i < sector->edgeCount - 2; ++i) {
-        indices.Add(baseIndex + 0);
-        indices.Add(baseIndex + i + 1);
-        indices.Add(baseIndex + i + 2);
-    }
-
-    // Create floor vertices
-    baseIndex = vertices.size;
-    for (s32 i = sector->edgeCount - 1; i >= 0; --i) {
-        const Edge* edge = &edges[sector->firstEdge + i];
-        const LineSegment* segment = &segments[edge->seg];
-
-        Vertex vertex = {};
-        if (edge->reversed) {
-            vertex.position = glm::vec3(segment->v2.x, sector->floorHeight, segment->v2.y);
-        }
-        else {
-            vertex.position = glm::vec3(segment->v1.x, sector->floorHeight, segment->v1.y);
-        }
-        vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
-        vertices.Add(vertex);
-    }
-
-    for (s32 i = 0; i < sector->edgeCount - 2; ++i) {
-        indices.Add(baseIndex + 0);
-        indices.Add(baseIndex + i + 1);
-        indices.Add(baseIndex + i + 2);
-    }
-
-    Mesh mesh = CreateMesh(vertices.data, vertices.size, indices.data, indices.size);
+    Mesh mesh = CreateMesh(vertices.data(), (u32)vertices.size(), indices.data(), (u32)indices.size());
     return mesh;
 }
-
-#include "earcut.h"
 
 int main(int argc, char** argv)
 {
@@ -421,22 +487,6 @@ int main(int argc, char** argv)
 
     Editor_Init();
 
-    Player player = {};
-    player.position = glm::vec2(3.0f, 3.0f);
-    player.angle = 0.0f;
-    player.radius = 0.25f;
-    player.currentSector = 0;
-
-    AABB box = {};
-    box.min = glm::vec2(4.0f, 2.0f);
-    box.max = glm::vec2(5.0f, 3.0f);
-
-
-    Mesh sectorMeshes[sectorCount];
-    for (s32 i = 0; i < sectorCount; ++i) {
-        sectorMeshes[i] = CreateSectorMesh(&sectors[i]);
-    }
-
     Material sectorMaterial = {};
     sectorMaterial.shader = RHI_CreateShader(R"(
         #version 330 core
@@ -468,35 +518,15 @@ int main(int argc, char** argv)
     bool editorMode = false;
 
     Camera2D cam = CreateDefaultCamera2D(1280, 720);
+    cam.pixelsPerUnit = 32.0f;
 
-    std::vector<glm::dvec2> vertices = {
-        {  0.0, 0.0 },
-        { 10.0, 0.0 },
-        { 10.0, 8.0 },
-        {  0.0, 8.0 },
-    };
-
-    std::vector<std::vector<glm::dvec2>> holes = {
-        {
-            { 3.0, 2.0 },
-            { 7.0, 2.0 },
-            { 7.0, 6.0 },
-            { 3.0, 6.0 }
-        }
-    };
-
-    Triangulation2D triangulation = EarclipWithHoles(vertices, holes);
-
-    std::vector<Vertex> triVertices;
-
-    for (const glm::dvec2& v : triangulation.vertices) {
-        Vertex vert = {};
-        vert.position = glm::vec3((f32)v.x, 0.0f, (f32)v.y);
-        vert.normal = glm::vec3(0.0f, 1.0f, 0.0f);
-        triVertices.push_back(vert);
+    Mesh sectorMeshes[sectorCount * 3];
+    for (s32 i = 0; i < sectorCount; ++i) {
+        sectorMeshes[i] = CreateSectorMesh(&sectors[i]);
+        std::array<Mesh, 2> floorCeilingMeshes = CreateFloorAndCeiling(&sectors[i]);
+        sectorMeshes[i + sectorCount] = floorCeilingMeshes[0];
+        sectorMeshes[i + sectorCount * 2] = floorCeilingMeshes[1];
     }
-
-    Mesh floorMesh = CreateMesh(triVertices.data(), (u32)triVertices.size(), triangulation.indices.data(), (u32)triangulation.indices.size());
 
     while (!Platform_WindowShouldClose())
     {
@@ -537,6 +567,7 @@ int main(int argc, char** argv)
                 glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
                 Renderer_BeginFrame(projection, view);
 
+                /*
                 for (s32 i = 0; i < sectorCount; ++i) {
                     Mesh* mesh = &sectorMeshes[i];
                     Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
@@ -547,7 +578,12 @@ int main(int argc, char** argv)
                 }
 
                 Renderer_DrawMesh(&floorMesh, &sectorMaterial, glm::mat4(1.0f));
+                */
 
+                for (s32 i = 0; i < sectorCount * 3; ++i) {
+                    Mesh* mesh = &sectorMeshes[i];
+                    Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
+                }
                 Renderer_EndFrame();
 
             } else { 
@@ -559,10 +595,10 @@ int main(int argc, char** argv)
                 Renderer2D_BeginFrame(&projection, &view);
 
                 for (s32 i = 0; i < sectorCount; ++i) {
-                    DrawSector(&sectors[i], i == player.currentSector ? COLOR_YELLOW : COLOR_WHITE);
+                    DrawSector(&sectors[i]);
                 }
 
-
+                /*
                 glm::vec2 rayOrigin = player.position;
                 glm::vec2 rayDir = glm::vec2(glm::cos(player.angle), glm::sin(player.angle));
 
@@ -608,6 +644,7 @@ int main(int argc, char** argv)
 
                 UpdatePlayer(&player, deltaTime);
                 DrawPlayer(&player);
+                */
 
 
                 // Origin

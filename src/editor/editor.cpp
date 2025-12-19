@@ -127,8 +127,7 @@ void Editor_UpdateAndRender(f32 dt) {
                         (s32)segment.v2.x / 32,
                         (s32)segment.v2.y / 32,
                         segment.frontSector,
-                        segment.backSector,
-                        segment.flags);
+                        segment.backSector);
                 }
                 printf("};\n");
 
