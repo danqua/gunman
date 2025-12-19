@@ -40,6 +40,11 @@ enum TextureFilter {
     TextureFilter_Anisotropic
 };
 
+enum TextureWrapMode {
+    TextureWrapMode_Clamp,
+    TextureWrapMode_Repeat
+};
+
 struct BufferElement {
     s32 location;
     AttribType type;
@@ -96,6 +101,7 @@ void RHI_DestroyTexture(TextureId texture);
 void RHI_BindTexture(TextureId texture, u32 slot = 0);
 void RHI_UnbindTexture(TextureId texture);
 void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter mag);
+void RHI_SetTextureWrapMode(TextureId texture, TextureWrapMode wrapS, TextureWrapMode wrapT);
 u32 RHI_GetTextureWidth(TextureId texture);
 u32 RHI_GetTextureHeight(TextureId texture);
 

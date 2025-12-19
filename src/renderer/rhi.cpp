@@ -156,6 +156,14 @@ static GLenum TextureFilterToOpenGL(TextureFilter filter) {
     }
 }
 
+static GLenum TextureWrapModeToOpenGL(TextureWrapMode wrapMode) {
+    switch (wrapMode) {
+        case TextureWrapMode_Clamp: return GL_CLAMP_TO_EDGE;
+        case TextureWrapMode_Repeat: return GL_REPEAT;
+        default: return GL_REPEAT;
+    }
+}
+
 void RHI_Init() {
     gladLoadGL();
 
@@ -472,6 +480,12 @@ void RHI_SetTextureFilter(TextureId texture, TextureFilter min, TextureFilter ma
     glBindTexture(GL_TEXTURE_2D, textures[texture].id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TextureFilterToOpenGL(min));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TextureFilterToOpenGL(mag));
+}
+
+void RHI_SetTextureWrapMode(TextureId texture, TextureWrapMode wrapS, TextureWrapMode wrapT) {
+    glBindTexture(GL_TEXTURE_2D, textures[texture].id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TextureWrapModeToOpenGL(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TextureWrapModeToOpenGL(wrapT));
 }
 
 u32 RHI_GetTextureWidth(TextureId textureId) {

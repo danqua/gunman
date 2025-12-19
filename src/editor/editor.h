@@ -1,6 +1,7 @@
 #pragma once
 #include "core/types.h"
 #include "core/containers.h"
+#include "core/memory.h"
 #include "renderer/renderer_2d.h"
 #include "game/map.h"
 
@@ -8,7 +9,6 @@
 #include <vector>
 #include <unordered_map>
 
-#define MAX_SECTORS 1024
 
 enum EditorDrawMode {
     EditorDrawMode_None,
@@ -29,35 +29,51 @@ struct EditMode {
 };
 
 #define MAX_MAP_VERTICES 4096
+#define MAP_MAP_WALLS 8192
+#define MAP_MAX_SECTOR_GROUPS 256
+#define MAP_MAX_INNER_SECTORS 32
+#define MAP_MAX_SECTORS 1024
+
+#define MAP_MAX_GROUP_WALLS 128
+
+
 #define MAX_MAP_SEGMENTS 8192
 
-struct MapHandle {
-    u32 id;
-    u32 version;
-};
-
-constexpr MapHandle MAP_HANDLE_INVALID = { ~0u, ~0u };
+#define MAP_MAX_TRANSIENT_POINTS 128
 
 struct MapVertex {
     s32 x;
     s32 y;
 };
 
+enum SectorType {
+    SectorType_Outer,
+    SectorType_Inner
+};
+
+struct MapSector;
+struct MapWall;
+
+struct MapSectorGroup {
+    MapSector* sector;
+    MapWall* walls[MAP_MAX_GROUP_WALLS];
+    u32 wallCount;
+    SectorType type;
+};
+
+struct MapSector {
+    MapSectorGroup* groups[MAP_MAX_INNER_SECTORS];
+    u32 groupCount;
+    f32 floorHeight;
+    f32 ceilingHeight;
+};
+
 struct MapWall {
-    MapHandle v1;
-    MapHandle v2;
-    MapHandle sector;
-    MapHandle group;
-};
-
-struct MapLineSegment {
-    s32 v1;
-    s32 v2;
-};
-
-struct MapEdge {
-    s32 segment;
-    bool reversed;
+    MapVertex* v1;
+    MapVertex* v2;
+    MapSector* sector;
+    MapSectorGroup* group;
+    MapWall* twin;
 };
 
 struct EditorState {
@@ -74,16 +90,40 @@ struct EditorState {
 
     EditorDrawMode mode;
 
-    std::vector<MapVertex> vertices;
+    Pool vertexPool;
+    Pool wallPool;
+    Pool groupPool;
+    Pool sectorPool;
+
+    MapVertex* vertices[MAX_MAP_VERTICES];
+    u32 vertexCount;
+
+    MapWall* walls[MAP_MAP_WALLS];
+    u32 wallCount;
+
+    MapSectorGroup* sectorGroups[MAP_MAX_SECTOR_GROUPS];
+    u32 sectorGroupCount;
+
+    MapSector* sectors[MAP_MAX_SECTORS];
+    u32 sectorCount;
+
+    bool dragVertex;
+    MapVertex* activeVertex;
+
+    MapWall* closestWall;
+    glm::vec2 closestPointOnWall;
 
 
 
 
+    glm::ivec2 tVertices[MAP_MAX_TRANSIENT_POINTS];
+    u64 tVertexCount;
 
-    std::array<Sector, MAX_SECTORS> sectors;
-    u64 sectorCount;
 
-    std::vector<glm::ivec2> points;
+    std::array<Sector, MAP_MAX_SECTORS> arrsectors;
+    u64 arrSectorCount;
+
+    std::vector<glm::ivec2> vpoints;
     std::vector<LineSegment> vsegments;
     std::unordered_map<s32, std::vector<Edge>> sectorEdgeMap;
 };

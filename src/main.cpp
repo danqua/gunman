@@ -347,7 +347,9 @@ void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, std
         glm::vec3(v2.x, ceilHeight, v2.y),
         glm::vec3(v1.x, ceilHeight, v1.y)
     };
-    glm::vec3 normal = glm::normalize(glm::vec3(v2.y - v1.y, 0.0f, v1.x - v2.x));
+
+    glm::vec3 vDir = glm::vec3(v2.x - v1.x, 0.0f, v2.y - v1.y);
+    glm::vec3 normal = glm::normalize(glm::cross(vDir, glm::vec3(0.0f, 1.0f, 0.0f)));
 
     u32 baseIndex = vertices.size();
 
@@ -355,6 +357,12 @@ void CreateWall(glm::vec2 v1, glm::vec2 v2, f32 floorHeight, f32 ceilHeight, std
         Vertex vert;
         vert.position = verts[i];
         vert.normal = normal;
+
+        glm::vec3 uAxis = glm::cross(normal, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 vAxis = glm::cross(uAxis, normal);
+        vert.texCoord0.s = glm::dot(vert.position, uAxis) /* + uOffset */;
+        vert.texCoord0.t = glm::dot(vert.position, vAxis) /* + vOffset */;
+
         vertices.push_back(vert);
     }
 
@@ -407,6 +415,11 @@ std::array<Mesh, 2> CreateFloorAndCeiling(const Sector* sector) {
             Vertex v = {};
             v.position = glm::vec3(vertex[0], sector->ceilingHeight, vertex[1]);
             v.normal = glm::vec3(0.0f, -1.0f, 0.0f);
+
+            glm::vec3 uAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+            glm::vec3 vAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+            v.texCoord0.s = glm::dot(v.position, uAxis) /* + uOffset */;
+            v.texCoord0.t = glm::dot(v.position, vAxis) /* + vOffset */;
             triVertices.push_back(v);
         }
     }
@@ -417,6 +430,10 @@ std::array<Mesh, 2> CreateFloorAndCeiling(const Sector* sector) {
     for (auto& v : triVertices) {
         v.position.y = sector->floorHeight;
         v.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 uAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 vAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+        v.texCoord0.s = glm::dot(v.position, uAxis) /* + uOffset */;
+        v.texCoord0.t = glm::dot(v.position, vAxis) /* + vOffset */;
     }
     std::reverse(indices.begin(), indices.end());
     meshes[0] = CreateMesh(triVertices.data(), (u32)triVertices.size(), indices.data(), (u32)indices.size());
@@ -487,13 +504,18 @@ int main(int argc, char** argv)
 
     Editor_Init();
 
+    TextureId checkerBoardTex = Asset_LoadTexture("textures/blockout/gray_check.png");
+    RHI_SetTextureWrapMode(checkerBoardTex, TextureWrapMode_Repeat, TextureWrapMode_Repeat);
+
     Material sectorMaterial = {};
     sectorMaterial.shader = RHI_CreateShader(R"(
         #version 330 core
         layout (location = 0) in vec3 aPosition;
         layout (location = 1) in vec3 aNormal;
+        layout (location = 3) in vec2 aTexCoord;
 
         out vec3 vNormal;
+        out vec2 vTexCoord;
 
         uniform mat4 uProjectionMatrix;
         uniform mat4 uViewMatrix;
@@ -501,21 +523,30 @@ int main(int argc, char** argv)
         void main() {
             gl_Position = uProjectionMatrix * uViewMatrix * vec4(aPosition, 1.0);
             vNormal = abs(aNormal);
+            vTexCoord = aTexCoord;
         }
     )", R"(
         #version 330 core
         in vec3 vNormal;
+        in vec2 vTexCoord;
         out vec4 fragColor;
 
+        uniform sampler2D uDiffuseTexture;
+
         void main() {
-            fragColor = vec4(vNormal, 1.0);
+            float gray = dot(vNormal, vec3(0.89, 0.95, 0.76));
+            fragColor = texture(uDiffuseTexture, vTexCoord) * vec4(vec3(gray), 1.0);
         }
     )");
+    //sectorMaterial.shader = Asset_LoadShader("shaders/default.vs", "shaders/default.fs");
+    sectorMaterial.diffuseTexture = checkerBoardTex;
     sectorMaterial.backfaceCulling = true;
+    sectorMaterial.diffuseColor = glm::vec3(1.0f);
+    sectorMaterial.useLightmap = false;
 
     bool toggleTo3D = false;
     bool debugDraw = false;
-    bool editorMode = false;
+    bool editorMode = true;
 
     Camera2D cam = CreateDefaultCamera2D(1280, 720);
     cam.pixelsPerUnit = 32.0f;
@@ -527,6 +558,12 @@ int main(int argc, char** argv)
         sectorMeshes[i + sectorCount] = floorCeilingMeshes[0];
         sectorMeshes[i + sectorCount * 2] = floorCeilingMeshes[1];
     }
+
+    Light light = {};
+    light.position = glm::vec3(2.0f, 2.0f, 2.0f);
+    light.color = glm::vec3(1.0f, 0.95f, 0.8f);
+    light.intensity = 1.0f;
+    light.range = 5.0f;
 
     while (!Platform_WindowShouldClose())
     {
@@ -567,22 +604,15 @@ int main(int argc, char** argv)
                 glm::mat4 view = Transform_GetMatrixInv(&cameraTransform);
                 Renderer_BeginFrame(projection, view);
 
-                /*
-                for (s32 i = 0; i < sectorCount; ++i) {
-                    Mesh* mesh = &sectorMeshes[i];
-                    Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
-
-                    if (debugDraw) {
-                        Renderer_DrawBox(mesh->aabb.min, mesh->aabb.max, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-                    }
-                }
-
-                Renderer_DrawMesh(&floorMesh, &sectorMaterial, glm::mat4(1.0f));
-                */
+                Renderer_AddLight(&light);
 
                 for (s32 i = 0; i < sectorCount * 3; ++i) {
                     Mesh* mesh = &sectorMeshes[i];
                     Renderer_DrawMesh(mesh, &sectorMaterial, glm::mat4(1.0f));
+
+                    if (debugDraw) {
+                        Renderer_DrawBox(mesh->aabb.min, mesh->aabb.max, Color_ConvertToVec4(COLOR_GREEN));
+                    }
                 }
                 Renderer_EndFrame();
 

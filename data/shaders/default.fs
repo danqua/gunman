@@ -39,7 +39,7 @@ float bayerThreshold(vec2 fragCoord) {
 
 void main()
 {
-	float ambient = 0.5;
+	float ambient = 0.2;
 	vec4 baseColor = texture(uDiffuseTexture, vTexCoord0);
 	vec3 color = baseColor.rgb * uDiffuseColor;
 
@@ -66,6 +66,6 @@ void main()
 
 	float threshold = bayerThreshold(gl_FragCoord.xy);
 
-	color = floor(color * 31.0 + threshold) / 31.0; // 5-bit quantization
+	//color = floor(color * 31.0 + threshold) / 31.0; // 5-bit quantization
 	fragColor = vec4(color, baseColor.a);
 }
