@@ -31,9 +31,23 @@ struct EditMode {
 #define MAX_MAP_VERTICES 4096
 #define MAX_MAP_SEGMENTS 8192
 
+struct MapHandle {
+    u32 id;
+    u32 version;
+};
+
+constexpr MapHandle MAP_HANDLE_INVALID = { ~0u, ~0u };
+
 struct MapVertex {
     s32 x;
     s32 y;
+};
+
+struct MapWall {
+    MapHandle v1;
+    MapHandle v2;
+    MapHandle sector;
+    MapHandle group;
 };
 
 struct MapLineSegment {
@@ -60,6 +74,7 @@ struct EditorState {
 
     EditorDrawMode mode;
 
+    std::vector<MapVertex> vertices;
 
 
 
@@ -71,15 +86,6 @@ struct EditorState {
     std::vector<glm::ivec2> points;
     std::vector<LineSegment> vsegments;
     std::unordered_map<s32, std::vector<Edge>> sectorEdgeMap;
-
-
-
-    MapVertex vertices[MAX_MAP_VERTICES];
-    u32 vertexCount;
-
-    MapLineSegment lineSegments[MAX_MAP_SEGMENTS];
-    u32 lineSegmentCount;
-
 };
 
 void Editor_Init();
